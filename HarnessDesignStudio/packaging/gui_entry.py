@@ -275,6 +275,7 @@ def audit_run(argv: list[str]) -> int:
     closer = QTimer()
     closer.timeout.connect(dismiss)
     closer.start(200)
+    win.show_landing()  # the start a person sees: Home, nothing opened (as `app.main` does)
     win.show()
     QApplication.processEvents()
     steps["open the project"] = bool(win.open_project(project))

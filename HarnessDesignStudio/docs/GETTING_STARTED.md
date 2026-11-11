@@ -67,7 +67,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 0 errors is what you want. The INFO line is normal: it says the engineering values are not filled in yet (Part 7).
 
-**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. A project opens on the **Next step** page (*What to do next*) when you work as a Systems engineer or an AIT engineer, and on the diagram as an Electrical engineer; the first start asks which you are; see Part 2. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one); both open one window where you choose the folder, the name and the example.
+**In the app:** start **Harness Design Studio**. It starts on **Home** with nothing open (it does not reopen the project of your last session; your **Recent projects** are listed there). Press **Open project…** (or **File > Open project…**) and pick the `wheel-link` folder. The first time, the app also offers a short tour of a built-in sample; **Skip tour** or follow it. A project opens on the **Next step** page (*What to do next*) when you work as a Systems engineer or an AIT engineer, and on the diagram as an Electrical engineer; the first start asks which you are; see Part 2. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one); both open one window where you choose the folder, the name and the example.
 
 ## Part 2: look around
 
