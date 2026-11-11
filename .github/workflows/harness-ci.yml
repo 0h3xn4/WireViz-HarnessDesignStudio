@@ -65,7 +65,7 @@ jobs:
           pytest -q tests/test_docs.py tests/test_docs_links.py tests/test_compliance_matrix.py
           tests/test_scf.py tests/test_sdd_components.py tests/test_trace.py tests/test_metrics.py
           tests/test_family_group_mapping.py tests/test_profiles.py
-          tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists
+          tests/test_drc.py::test_cited_requirements_are_assessed
           tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example
 
   test:
