@@ -1,0 +1,1030 @@
+{
+ "components": [
+  {
+   "files": [
+    "harness-design-studio-gui",
+    "harness-design-studio.desktop.in",
+    "harness-design-studio.svg"
+   ],
+   "kind": "bootloader",
+   "licence": "GPL-2.0-or-later WITH Bootloader-exception",
+   "name": "PyInstaller bootloader and runtime hooks",
+   "origin": "the packages are built with PyInstaller (tools/build_installer.py)",
+   "version": "6.22.3"
+  },
+  {
+   "files": [
+    "LICENSES/inter/OFL-1.1-Inter.txt",
+    "_internal/harness_design_studio/resources/fonts/Inter-Medium.ttf",
+    "_internal/harness_design_studio/resources/fonts/Inter-Regular.ttf",
+    "_internal/harness_design_studio/resources/fonts/Inter-SemiBold.ttf",
+    "_internal/harness_design_studio/resources/fonts/OFL-1.1-Inter.txt",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-Medium.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-Regular.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-SemiBold.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/OFL-1.1-Inter.txt"
+   ],
+   "kind": "font",
+   "licence": "OFL-1.1",
+   "name": "Inter (font)",
+   "origin": "file names; versions from decision D-150",
+   "version": "4.1"
+  },
+  {
+   "files": [
+    "LICENSES/jetbrains-mono/OFL-1.1-JetBrains-Mono.txt",
+    "_internal/harness_design_studio/resources/fonts/JetBrainsMono-Medium.ttf",
+    "_internal/harness_design_studio/resources/fonts/JetBrainsMono-Regular.ttf",
+    "_internal/harness_design_studio/resources/fonts/OFL-1.1-JetBrains-Mono.txt",
+    "cli/_internal/harness_design_studio/resources/fonts/JetBrainsMono-Medium.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/JetBrainsMono-Regular.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/OFL-1.1-JetBrains-Mono.txt"
+   ],
+   "kind": "font",
+   "licence": "OFL-1.1",
+   "name": "JetBrains Mono (font)",
+   "origin": "file names; versions from decision D-150",
+   "version": "2.304"
+  },
+  {
+   "files": [],
+   "kind": "icon",
+   "licence": "ISC AND MIT",
+   "name": "Lucide and Feather icon outlines (gui/icons.py)",
+   "origin": "gui/icons.py",
+   "version": "lucide-static 1.56.0"
+  },
+  {
+   "files": [
+    "LICENSES/annotated-types/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "annotated-types",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.8.0"
+  },
+  {
+   "files": [
+    "LICENSES/defusedxml/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "PSFL",
+   "name": "defusedxml",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.7.1"
+  },
+  {
+   "files": [
+    "LICENSES/et-xmlfile/AUTHORS.txt",
+    "LICENSES/et-xmlfile/LICENCE.python",
+    "LICENSES/et-xmlfile/LICENCE.rst"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "et_xmlfile",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "2.0.0"
+  },
+  {
+   "files": [
+    "LICENSES/openpyxl/LICENCE.rst"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "openpyxl",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "3.1.5"
+  },
+  {
+   "files": [
+    "_internal/pydantic-2.13.5.dist-info",
+    "cli/_internal/pydantic-2.13.5.dist-info"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "pydantic",
+   "origin": "dist-info METADATA",
+   "version": "2.13.5"
+  },
+  {
+   "files": [
+    "LICENSES/pydantic-core/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "pydantic_core",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "2.46.5"
+  },
+  {
+   "files": [],
+   "kind": "python",
+   "licence": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+   "name": "PySide6_Essentials",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "6.11.2"
+  },
+  {
+   "files": [],
+   "kind": "python",
+   "licence": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+   "name": "shiboken6",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "6.11.2"
+  },
+  {
+   "files": [
+    "LICENSES/typing-inspection/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "typing-inspection",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.4.5"
+  },
+  {
+   "files": [
+    "LICENSES/typing-extensions/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "PSF-2.0",
+   "name": "typing_extensions",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "4.16.0"
+  },
+  {
+   "files": [
+    "_internal/PySide6/Qt/lib/libQt6Core.so.6",
+    "_internal/PySide6/Qt/lib/libQt6DBus.so.6",
+    "_internal/PySide6/Qt/lib/libQt6EglFSDeviceIntegration.so.6",
+    "_internal/PySide6/Qt/lib/libQt6EglFsKmsSupport.so.6",
+    "_internal/PySide6/Qt/lib/libQt6Gui.so.6",
+    "_internal/PySide6/Qt/lib/libQt6OpenGL.so.6",
+    "_internal/PySide6/Qt/lib/libQt6Svg.so.6",
+    "_internal/PySide6/Qt/lib/libQt6WaylandClient.so.6",
+    "_internal/PySide6/Qt/lib/libQt6Widgets.so.6",
+    "_internal/PySide6/Qt/lib/libQt6WlShellIntegration.so.6",
+    "_internal/PySide6/Qt/lib/libQt6XcbQpa.so.6",
+    "_internal/PySide6/Qt/plugins/egldeviceintegrations/libqeglfs-emu-integration.so",
+    "_internal/PySide6/Qt/plugins/egldeviceintegrations/libqeglfs-kms-egldevice-integration.so",
+    "_internal/PySide6/Qt/plugins/egldeviceintegrations/libqeglfs-x11-integration.so",
+    "_internal/PySide6/Qt/plugins/generic/libqevdevkeyboardplugin.so",
+    "_internal/PySide6/Qt/plugins/generic/libqevdevmouseplugin.so",
+    "_internal/PySide6/Qt/plugins/generic/libqevdevtabletplugin.so",
+    "_internal/PySide6/Qt/plugins/generic/libqevdevtouchplugin.so",
+    "_internal/PySide6/Qt/plugins/iconengines/libqsvgicon.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqgif.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqicns.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqico.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqjpeg.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqsvg.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqtga.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqtiff.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqwbmp.so",
+    "_internal/PySide6/Qt/plugins/imageformats/libqwebp.so",
+    "_internal/PySide6/Qt/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so",
+    "_internal/PySide6/Qt/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqeglfs.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqlinuxfb.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqminimal.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqminimalegl.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqoffscreen.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqvkkhrdisplay.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqwayland.so",
+    "_internal/PySide6/Qt/plugins/platforms/libqxcb.so",
+    "_internal/PySide6/Qt/plugins/platformthemes/libqgtk3.so",
+    "_internal/PySide6/Qt/plugins/platformthemes/libqxdgdesktopportal.so",
+    "_internal/PySide6/Qt/plugins/wayland-decoration-client/libadwaita.so",
+    "_internal/PySide6/Qt/plugins/wayland-decoration-client/libbradient.so",
+    "_internal/PySide6/Qt/plugins/wayland-graphics-integration-client/libdmabuf-server.so",
+    "_internal/PySide6/Qt/plugins/wayland-graphics-integration-client/libdrm-egl-server.so",
+    "_internal/PySide6/Qt/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so",
+    "_internal/PySide6/Qt/plugins/wayland-graphics-integration-client/libshm-emulation-server.so",
+    "_internal/PySide6/Qt/plugins/wayland-graphics-integration-client/libvulkan-server.so",
+    "_internal/PySide6/Qt/plugins/wayland-shell-integration/libfullscreen-shell-v1.so",
+    "_internal/PySide6/Qt/plugins/wayland-shell-integration/libivi-shell.so",
+    "_internal/PySide6/Qt/plugins/wayland-shell-integration/libqt-shell.so",
+    "_internal/PySide6/Qt/plugins/wayland-shell-integration/libwl-shell-plugin.so",
+    "_internal/PySide6/Qt/plugins/wayland-shell-integration/libxdg-shell.so",
+    "_internal/PySide6/Qt/plugins/xcbglintegrations/libqxcb-egl-integration.so",
+    "_internal/PySide6/Qt/plugins/xcbglintegrations/libqxcb-glx-integration.so",
+    "_internal/libQt6Core.so.6",
+    "_internal/libQt6DBus.so.6",
+    "_internal/libQt6EglFSDeviceIntegration.so.6",
+    "_internal/libQt6EglFsKmsSupport.so.6",
+    "_internal/libQt6Gui.so.6",
+    "_internal/libQt6OpenGL.so.6",
+    "_internal/libQt6Svg.so.6",
+    "_internal/libQt6WaylandClient.so.6",
+    "_internal/libQt6Widgets.so.6",
+    "_internal/libQt6WlShellIntegration.so.6",
+    "_internal/libQt6XcbQpa.so.6"
+   ],
+   "kind": "qt",
+   "licence": "LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence)",
+   "name": "Qt (Core, DBus, EglFSDeviceIntegration, EglFsKmsSupport, Gui, OpenGL, Svg, WaylandClient, Widgets, WlShellIntegration, XcbQpa)",
+   "origin": "library file names; version of PySide6",
+   "version": "6.11.2"
+  },
+  {
+   "files": [
+    "_internal/libpython3.14.so.1.0",
+    "cli/_internal/libpython3.14.so.1.0"
+   ],
+   "kind": "runtime",
+   "licence": "PSF-2.0",
+   "name": "CPython runtime",
+   "origin": "library file name; version string inside it",
+   "version": "3.14.10"
+  },
+  {
+   "files": [
+    "_internal/libicudata.so.73",
+    "_internal/libicui18n.so.73",
+    "_internal/libicuuc.so.73"
+   ],
+   "kind": "system",
+   "licence": "ICU AND Unicode-DFS-2016",
+   "name": "ICU (libicudata, libicui18n, libicuuc)",
+   "origin": "libicu*.so.N beside Qt in the PySide6 wheel; the licence from the ICU project",
+   "version": "73"
+  },
+  {
+   "files": [
+    "_internal/libatk-bridge-2.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later",
+   "name": "libatk-bridge2.0-0t64",
+   "origin": "dpkg -S libatk-bridge-2.0.so.0; /usr/share/doc/libatk-bridge2.0-0t64/copyright",
+   "version": "2.52.0-1build1"
+  },
+  {
+   "files": [
+    "_internal/libatk-1.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later",
+   "name": "libatk1.0-0t64",
+   "origin": "dpkg -S libatk-1.0.so.0; /usr/share/doc/libatk1.0-0t64/copyright",
+   "version": "2.52.0-1build1"
+  },
+  {
+   "files": [
+    "_internal/libatspi.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later",
+   "name": "libatspi2.0-0t64",
+   "origin": "dpkg -S libatspi.so.0; /usr/share/doc/libatspi2.0-0t64/copyright",
+   "version": "2.52.0-1build1"
+  },
+  {
+   "files": [
+    "_internal/libblkid.so.1"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libblkid1",
+   "origin": "dpkg -S libblkid.so.1; /usr/share/doc/libblkid1/copyright",
+   "version": "2.39.3-9ubuntu6.6"
+  },
+  {
+   "files": [
+    "_internal/libbrotlicommon.so.1",
+    "_internal/libbrotlidec.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libbrotli1",
+   "origin": "dpkg -S libbrotlicommon.so.1; /usr/share/doc/libbrotli1/copyright",
+   "version": "1.1.0-2ubuntu0.1"
+  },
+  {
+   "files": [
+    "_internal/libbsd.so.0"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause AND ISC",
+   "name": "libbsd0",
+   "origin": "dpkg -S libbsd.so.0; /usr/share/doc/libbsd0/copyright",
+   "version": "0.12.1-1build1.1"
+  },
+  {
+   "files": [
+    "_internal/libbz2.so.1.0",
+    "cli/_internal/libbz2.so.1.0"
+   ],
+   "kind": "system",
+   "licence": "bzip2-1.0.6",
+   "name": "libbz2-1.0",
+   "origin": "dpkg -S libbz2.so.1.0; /usr/share/doc/libbz2-1.0/copyright",
+   "version": "1.0.8-5.1ubuntu0.1"
+  },
+  {
+   "files": [
+    "_internal/libcairo-gobject.so.2"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-only OR MPL-1.1",
+   "name": "libcairo-gobject2",
+   "origin": "dpkg -S libcairo-gobject.so.2; /usr/share/doc/libcairo-gobject2/copyright",
+   "version": "1.18.0-3build1"
+  },
+  {
+   "files": [
+    "_internal/libcairo.so.2"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-only OR MPL-1.1",
+   "name": "libcairo2",
+   "origin": "dpkg -S libcairo.so.2; /usr/share/doc/libcairo2/copyright",
+   "version": "1.18.0-3build1"
+  },
+  {
+   "files": [
+    "_internal/libcap.so.2"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause OR GPL-2.0-only",
+   "name": "libcap2",
+   "origin": "dpkg -S libcap.so.2; /usr/share/doc/libcap2/copyright",
+   "version": "1:2.66-5ubuntu2.4"
+  },
+  {
+   "files": [
+    "_internal/libcom_err.so.2"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libcom-err2",
+   "origin": "dpkg -S libcom_err.so.2; /usr/share/doc/libcom-err2/copyright",
+   "version": "1.47.0-2.4~exp1ubuntu4.1"
+  },
+  {
+   "files": [
+    "_internal/libdatrie.so.1"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libdatrie1",
+   "origin": "dpkg -S libdatrie.so.1; /usr/share/doc/libdatrie1/copyright",
+   "version": "0.2.13-3build1"
+  },
+  {
+   "files": [
+    "_internal/libdbus-1.so.3"
+   ],
+   "kind": "system",
+   "licence": "AFL-2.1 OR GPL-2.0-or-later",
+   "name": "libdbus-1-3",
+   "origin": "dpkg -S libdbus-1.so.3; /usr/share/doc/libdbus-1-3/copyright",
+   "version": "1.14.10-4ubuntu4.1"
+  },
+  {
+   "files": [
+    "_internal/libepoxy.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libepoxy0",
+   "origin": "dpkg -S libepoxy.so.0; /usr/share/doc/libepoxy0/copyright",
+   "version": "1.5.10-1build1"
+  },
+  {
+   "files": [
+    "_internal/libexpat.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libexpat1",
+   "origin": "dpkg -S libexpat.so.1; /usr/share/doc/libexpat1/copyright",
+   "version": "2.6.1-2ubuntu0.6"
+  },
+  {
+   "files": [
+    "_internal/libffi.so.8",
+    "cli/_internal/libffi.so.8"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libffi8",
+   "origin": "dpkg -S libffi.so.8; /usr/share/doc/libffi8/copyright",
+   "version": "3.4.6-1build1"
+  },
+  {
+   "files": [
+    "_internal/libfontconfig.so.1"
+   ],
+   "kind": "system",
+   "licence": "HPND-sell-variant",
+   "name": "libfontconfig1",
+   "origin": "dpkg -S libfontconfig.so.1; /usr/share/doc/libfontconfig1/copyright",
+   "version": "2.15.0-1.1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libfreetype.so.6"
+   ],
+   "kind": "system",
+   "licence": "FTL OR GPL-2.0-or-later",
+   "name": "libfreetype6",
+   "origin": "dpkg -S libfreetype.so.6; /usr/share/doc/libfreetype6/copyright",
+   "version": "2.13.2+dfsg-1ubuntu0.2"
+  },
+  {
+   "files": [
+    "_internal/libfribidi.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libfribidi0",
+   "origin": "dpkg -S libfribidi.so.0; /usr/share/doc/libfribidi0/copyright",
+   "version": "1.0.13-3build1"
+  },
+  {
+   "files": [
+    "_internal/libgcc_s.so.1",
+    "cli/_internal/libgcc_s.so.1"
+   ],
+   "kind": "system",
+   "licence": "GPL-3.0-or-later WITH GCC-exception-3.1",
+   "name": "libgcc-s1",
+   "origin": "dpkg -S libgcc_s.so.1; /usr/share/doc/libgcc-s1/copyright",
+   "version": "14.2.0-4ubuntu2~24.04.1"
+  },
+  {
+   "files": [
+    "_internal/libgcrypt.so.20"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libgcrypt20",
+   "origin": "dpkg -S libgcrypt.so.20; /usr/share/doc/libgcrypt20/copyright",
+   "version": "1.10.3-2ubuntu0.2"
+  },
+  {
+   "files": [
+    "_internal/libgdk_pixbuf-2.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later AND LGPL-2.1-or-later AND CC0-1.0",
+   "name": "libgdk-pixbuf-2.0-0",
+   "origin": "dpkg -S libgdk_pixbuf-2.0.so.0; /usr/share/doc/libgdk-pixbuf-2.0-0/copyright",
+   "version": "2.42.10+dfsg-3ubuntu3.3"
+  },
+  {
+   "files": [
+    "_internal/libgio-2.0.so.0",
+    "_internal/libglib-2.0.so.0",
+    "_internal/libgmodule-2.0.so.0",
+    "_internal/libgobject-2.0.so.0",
+    "_internal/libgthread-2.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libglib2.0-0t64",
+   "origin": "dpkg -S libgio-2.0.so.0; /usr/share/doc/libglib2.0-0t64/copyright",
+   "version": "2.80.0-6ubuntu3.10"
+  },
+  {
+   "files": [
+    "_internal/libgpg-error.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libgpg-error0",
+   "origin": "dpkg -S libgpg-error.so.0; /usr/share/doc/libgpg-error0/copyright",
+   "version": "1.47-3build2.1"
+  },
+  {
+   "files": [
+    "_internal/libgraphite2.so.3"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later OR MPL-1.1 OR GPL-2.0-or-later",
+   "name": "libgraphite2-3",
+   "origin": "dpkg -S libgraphite2.so.3; /usr/share/doc/libgraphite2-3/copyright",
+   "version": "1.3.14-2ubuntu0.24.04.1"
+  },
+  {
+   "files": [
+    "_internal/libgdk-3.so.0",
+    "_internal/libgtk-3.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT",
+   "name": "libgtk-3-0t64",
+   "origin": "dpkg -S libgdk-3.so.0; /usr/share/doc/libgtk-3-0t64/copyright",
+   "version": "3.24.41-4ubuntu1.3"
+  },
+  {
+   "files": [
+    "_internal/libharfbuzz.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libharfbuzz0b",
+   "origin": "dpkg -S libharfbuzz.so.0; /usr/share/doc/libharfbuzz0b/copyright",
+   "version": "8.3.0-2build2"
+  },
+  {
+   "files": [
+    "_internal/libjpeg.so.8"
+   ],
+   "kind": "system",
+   "licence": "IJG AND BSD-3-Clause AND Zlib",
+   "name": "libjpeg-turbo8",
+   "origin": "dpkg -S libjpeg.so.8; /usr/share/doc/libjpeg-turbo8/copyright",
+   "version": "2.1.5-2ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libkeyutils.so.1"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later",
+   "name": "libkeyutils1",
+   "origin": "dpkg -S libkeyutils.so.1; /usr/share/doc/libkeyutils1/copyright",
+   "version": "1.6.3-3build1"
+  },
+  {
+   "files": [
+    "_internal/liblz4.so.1"
+   ],
+   "kind": "system",
+   "licence": "BSD-2-Clause",
+   "name": "liblz4-1",
+   "origin": "dpkg -S liblz4.so.1; /usr/share/doc/liblz4-1/copyright",
+   "version": "1.9.4-1build1.1"
+  },
+  {
+   "files": [
+    "_internal/liblzma.so.5",
+    "cli/_internal/liblzma.so.5"
+   ],
+   "kind": "system",
+   "licence": "public domain",
+   "name": "liblzma5",
+   "origin": "dpkg -S liblzma.so.5; /usr/share/doc/liblzma5/copyright",
+   "version": "5.6.1+really5.4.5-1ubuntu0.4"
+  },
+  {
+   "files": [
+    "_internal/libmd.so.0"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause AND ISC AND public domain",
+   "name": "libmd0",
+   "origin": "dpkg -S libmd.so.0; /usr/share/doc/libmd0/copyright",
+   "version": "1.1.0-2build1.1"
+  },
+  {
+   "files": [
+    "_internal/libmount.so.1"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libmount1",
+   "origin": "dpkg -S libmount.so.1; /usr/share/doc/libmount1/copyright",
+   "version": "2.39.3-9ubuntu6.6"
+  },
+  {
+   "files": [
+    "_internal/libpango-1.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later AND LGPL-2.1-or-later",
+   "name": "libpango-1.0-0",
+   "origin": "dpkg -S libpango-1.0.so.0; /usr/share/doc/libpango-1.0-0/copyright",
+   "version": "1.52.1+ds-1build1"
+  },
+  {
+   "files": [
+    "_internal/libpangocairo-1.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later AND LGPL-2.1-or-later",
+   "name": "libpangocairo-1.0-0",
+   "origin": "dpkg -S libpangocairo-1.0.so.0; /usr/share/doc/libpangocairo-1.0-0/copyright",
+   "version": "1.52.1+ds-1build1"
+  },
+  {
+   "files": [
+    "_internal/libpangoft2-1.0.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.0-or-later AND LGPL-2.1-or-later",
+   "name": "libpangoft2-1.0-0",
+   "origin": "dpkg -S libpangoft2-1.0.so.0; /usr/share/doc/libpangoft2-1.0-0/copyright",
+   "version": "1.52.1+ds-1build1"
+  },
+  {
+   "files": [
+    "_internal/libpcre2-8.so.0"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause",
+   "name": "libpcre2-8-0",
+   "origin": "dpkg -S libpcre2-8.so.0; /usr/share/doc/libpcre2-8-0/copyright",
+   "version": "10.42-4ubuntu2.1"
+  },
+  {
+   "files": [
+    "_internal/libpixman-1.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libpixman-1-0",
+   "origin": "dpkg -S libpixman-1.so.0; /usr/share/doc/libpixman-1-0/copyright",
+   "version": "0.42.2-1build1"
+  },
+  {
+   "files": [
+    "_internal/libpng16.so.16"
+   ],
+   "kind": "system",
+   "licence": "libpng-2.0",
+   "name": "libpng16-16t64",
+   "origin": "dpkg -S libpng16.so.16; /usr/share/doc/libpng16-16t64/copyright",
+   "version": "1.6.43-5ubuntu0.7"
+  },
+  {
+   "files": [
+    "_internal/libselinux.so.1"
+   ],
+   "kind": "system",
+   "licence": "public domain",
+   "name": "libselinux1",
+   "origin": "dpkg -S libselinux.so.1; /usr/share/doc/libselinux1/copyright",
+   "version": "3.5-2ubuntu2.1"
+  },
+  {
+   "files": [
+    "_internal/libcrypto.so.3",
+    "cli/_internal/libcrypto.so.3"
+   ],
+   "kind": "system",
+   "licence": "Apache-2.0",
+   "name": "libssl3t64",
+   "origin": "dpkg -S libcrypto.so.3; /usr/share/doc/libssl3t64/copyright",
+   "version": "3.0.13-0ubuntu3.16"
+  },
+  {
+   "files": [
+    "_internal/libstdc++.so.6"
+   ],
+   "kind": "system",
+   "licence": "GPL-3.0-or-later WITH GCC-exception-3.1",
+   "name": "libstdc++6",
+   "origin": "dpkg -S libstdc++.so.6; /usr/share/doc/libstdc++6/copyright",
+   "version": "14.2.0-4ubuntu2~24.04.1"
+  },
+  {
+   "files": [
+    "_internal/libsystemd.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libsystemd0",
+   "origin": "dpkg -S libsystemd.so.0; /usr/share/doc/libsystemd0/copyright",
+   "version": "255.4-1ubuntu8.18"
+  },
+  {
+   "files": [
+    "_internal/libthai.so.0"
+   ],
+   "kind": "system",
+   "licence": "LGPL-2.1-or-later",
+   "name": "libthai0",
+   "origin": "dpkg -S libthai.so.0; /usr/share/doc/libthai0/copyright",
+   "version": "0.1.29-2build1"
+  },
+  {
+   "files": [
+    "_internal/libuuid.so.1",
+    "cli/_internal/libuuid.so.1"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause",
+   "name": "libuuid1",
+   "origin": "dpkg -S libuuid.so.1; /usr/share/doc/libuuid1/copyright",
+   "version": "2.39.3-9ubuntu6.6"
+  },
+  {
+   "files": [
+    "_internal/libX11.so.6"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libx11-6",
+   "origin": "dpkg -S libX11.so.6; /usr/share/doc/libx11-6/copyright",
+   "version": "2:1.8.7-1ubuntu0.1"
+  },
+  {
+   "files": [
+    "_internal/libX11-xcb.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libx11-xcb1",
+   "origin": "dpkg -S libX11-xcb.so.1; /usr/share/doc/libx11-xcb1/copyright",
+   "version": "2:1.8.7-1ubuntu0.1"
+  },
+  {
+   "files": [
+    "_internal/libXau.so.6"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxau6",
+   "origin": "dpkg -S libXau.so.6; /usr/share/doc/libxau6/copyright",
+   "version": "1:1.0.9-1build6"
+  },
+  {
+   "files": [
+    "_internal/libxcb-cursor.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-cursor0",
+   "origin": "dpkg -S libxcb-cursor.so.0; /usr/share/doc/libxcb-cursor0/copyright",
+   "version": "0.1.4-1build1"
+  },
+  {
+   "files": [
+    "_internal/libxcb-glx.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-glx0",
+   "origin": "dpkg -S libxcb-glx.so.0; /usr/share/doc/libxcb-glx0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-icccm.so.4"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-icccm4",
+   "origin": "dpkg -S libxcb-icccm.so.4; /usr/share/doc/libxcb-icccm4/copyright",
+   "version": "0.4.1-1.1build3"
+  },
+  {
+   "files": [
+    "_internal/libxcb-image.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-image0",
+   "origin": "dpkg -S libxcb-image.so.0; /usr/share/doc/libxcb-image0/copyright",
+   "version": "0.4.0-2build1"
+  },
+  {
+   "files": [
+    "_internal/libxcb-keysyms.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-keysyms1",
+   "origin": "dpkg -S libxcb-keysyms.so.1; /usr/share/doc/libxcb-keysyms1/copyright",
+   "version": "0.4.0-1build4"
+  },
+  {
+   "files": [
+    "_internal/libxcb-randr.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-randr0",
+   "origin": "dpkg -S libxcb-randr.so.0; /usr/share/doc/libxcb-randr0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-render-util.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-render-util0",
+   "origin": "dpkg -S libxcb-render-util.so.0; /usr/share/doc/libxcb-render-util0/copyright",
+   "version": "0.3.9-1build4"
+  },
+  {
+   "files": [
+    "_internal/libxcb-render.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-render0",
+   "origin": "dpkg -S libxcb-render.so.0; /usr/share/doc/libxcb-render0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-shape.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-shape0",
+   "origin": "dpkg -S libxcb-shape.so.0; /usr/share/doc/libxcb-shape0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-shm.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-shm0",
+   "origin": "dpkg -S libxcb-shm.so.0; /usr/share/doc/libxcb-shm0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-sync.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-sync1",
+   "origin": "dpkg -S libxcb-sync.so.1; /usr/share/doc/libxcb-sync1/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-util.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-util1",
+   "origin": "dpkg -S libxcb-util.so.1; /usr/share/doc/libxcb-util1/copyright",
+   "version": "0.4.0-1build3"
+  },
+  {
+   "files": [
+    "_internal/libxcb-xfixes.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-xfixes0",
+   "origin": "dpkg -S libxcb-xfixes.so.0; /usr/share/doc/libxcb-xfixes0/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libxcb-xkb.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcb-xkb1",
+   "origin": "dpkg -S libxcb-xkb.so.1; /usr/share/doc/libxcb-xkb1/copyright",
+   "version": "1.15-1ubuntu2"
+  },
+  {
+   "files": [
+    "_internal/libXcomposite.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcomposite1",
+   "origin": "dpkg -S libXcomposite.so.1; /usr/share/doc/libxcomposite1/copyright",
+   "version": "1:0.4.5-1build3"
+  },
+  {
+   "files": [
+    "_internal/libXcursor.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxcursor1",
+   "origin": "dpkg -S libXcursor.so.1; /usr/share/doc/libxcursor1/copyright",
+   "version": "1:1.2.1-1build1"
+  },
+  {
+   "files": [
+    "_internal/libXdamage.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxdamage1",
+   "origin": "dpkg -S libXdamage.so.1; /usr/share/doc/libxdamage1/copyright",
+   "version": "1:1.1.6-1build1"
+  },
+  {
+   "files": [
+    "_internal/libXdmcp.so.6"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxdmcp6",
+   "origin": "dpkg -S libXdmcp.so.6; /usr/share/doc/libxdmcp6/copyright",
+   "version": "1:1.1.3-0ubuntu6"
+  },
+  {
+   "files": [
+    "_internal/libXext.so.6"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxext6",
+   "origin": "dpkg -S libXext.so.6; /usr/share/doc/libxext6/copyright",
+   "version": "2:1.3.4-1build2"
+  },
+  {
+   "files": [
+    "_internal/libXfixes.so.3"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxfixes3",
+   "origin": "dpkg -S libXfixes.so.3; /usr/share/doc/libxfixes3/copyright",
+   "version": "1:6.0.0-2build1"
+  },
+  {
+   "files": [
+    "_internal/libXi.so.6"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxi6",
+   "origin": "dpkg -S libXi.so.6; /usr/share/doc/libxi6/copyright",
+   "version": "2:1.8.1-1build1"
+  },
+  {
+   "files": [
+    "_internal/libXinerama.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxinerama1",
+   "origin": "dpkg -S libXinerama.so.1; /usr/share/doc/libxinerama1/copyright",
+   "version": "2:1.1.4-3build1"
+  },
+  {
+   "files": [
+    "_internal/libxkbcommon-x11.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxkbcommon-x11-0",
+   "origin": "dpkg -S libxkbcommon-x11.so.0; /usr/share/doc/libxkbcommon-x11-0/copyright",
+   "version": "1.6.0-1build1"
+  },
+  {
+   "files": [
+    "_internal/libxkbcommon.so.0"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxkbcommon0",
+   "origin": "dpkg -S libxkbcommon.so.0; /usr/share/doc/libxkbcommon0/copyright",
+   "version": "1.6.0-1build1"
+  },
+  {
+   "files": [
+    "_internal/libXrandr.so.2"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxrandr2",
+   "origin": "dpkg -S libXrandr.so.2; /usr/share/doc/libxrandr2/copyright",
+   "version": "2:1.5.2-2build1"
+  },
+  {
+   "files": [
+    "_internal/libXrender.so.1"
+   ],
+   "kind": "system",
+   "licence": "MIT",
+   "name": "libxrender1",
+   "origin": "dpkg -S libXrender.so.1; /usr/share/doc/libxrender1/copyright",
+   "version": "1:0.9.10-1.1build1"
+  },
+  {
+   "files": [
+    "_internal/libzstd.so.1",
+    "cli/_internal/libzstd.so.1"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause OR GPL-2.0-only",
+   "name": "libzstd1",
+   "origin": "dpkg -S libzstd.so.1; /usr/share/doc/libzstd1/copyright",
+   "version": "1.5.5+dfsg2-2build1.1"
+  },
+  {
+   "files": [
+    "_internal/libz.so.1",
+    "cli/_internal/libz.so.1"
+   ],
+   "kind": "system",
+   "licence": "Zlib",
+   "name": "zlib1g",
+   "origin": "dpkg -S libz.so.1; /usr/share/doc/zlib1g/copyright",
+   "version": "1:1.3.dfsg-3.1ubuntu2.3"
+  }
+ ],
+ "format": "linux",
+ "tool_version": "1.17.1rc2"
+}

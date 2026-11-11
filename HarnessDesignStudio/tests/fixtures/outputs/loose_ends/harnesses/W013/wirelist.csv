@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.1rc1 model 054deb7d4d0e
-# harness-design-studio 1.17.1rc1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 1.17.1rc2 model df4e0dc87881
+# harness-design-studio 1.17.1rc2. Provided as is, without warranty. Verify before use.
 Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked
 W013-001,1PPS+,,W013-P1,1,W013-P2,1,24,EX-WIRE-SINGLE,red,0.5,,yes
 W013-002,1PPS-,,W013-P1,2,W013-P2,2,24,EX-WIRE-SINGLE,red,0.5,,yes
