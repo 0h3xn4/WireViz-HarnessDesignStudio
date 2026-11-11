@@ -373,6 +373,7 @@ class TopBar(QWidget):
         their states stay: they are the steps the person takes, not a notice."""
         self._notices = on
         self.chip.setVisible(on and not self._quick)
+        self._fit()  # the chip takes room: fold again for what the row holds now
 
     def set_quick(self, on: bool) -> None:
         """Quick mode: the bar keeps the project name, the save marker, the edit buttons the window

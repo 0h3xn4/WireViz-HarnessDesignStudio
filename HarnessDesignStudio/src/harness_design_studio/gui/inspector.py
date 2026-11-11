@@ -422,6 +422,9 @@ class Inspector(QWidget):
         self.tabs = QTabWidget()
         self.tabs.setObjectName("inspector-tabs")
         self.tabs.setAccessibleName(strings.INS_NAME)
+        # three tabs in a narrow panel: they shrink and elide, never scroll the first one away
+        self.tabs.setUsesScrollButtons(False)
+        self.tabs.setElideMode(Qt.TextElideMode.ElideRight)
         lay.addWidget(self.tabs)
         # ---- Inspector tab
         page = QWidget()
@@ -507,6 +510,7 @@ class Inspector(QWidget):
         used_lay.addWidget(self.used_table)
         page_lay.addWidget(self.used_box)
         self.tabs.addTab(page, strings.INS_TAB_INSPECTOR)
+        self.tabs.setTabToolTip(0, strings.INS_TAB_INSPECTOR)  # the whole name when it is cut
         # ---- Why tab
         self.why = WhyPanel(ctl, theme)
         self.tabs.addTab(self.why, strings.INS_TAB_WHY)
