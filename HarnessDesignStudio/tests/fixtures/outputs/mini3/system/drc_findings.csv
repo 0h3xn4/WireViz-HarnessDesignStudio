@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.1rc1 model d4adaabdb7bf
-# harness-design-studio 1.17.1rc1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 1.17.1rc2 model c0d5c1c6f7c3
+# harness-design-studio 1.17.1rc2. Provided as is, without warranty. Verify before use.
 Finding,Rule,Severity,Object,Statement,Waived,Justification,Requirement
 part-unapproved.EX-MICROD-15-F,part-unapproved,warning,EX-MICROD-15-F,Part EX-MICROD-15-F is not approved yet but is used (3 place(s)),,,ESCC3901-4.4
 part-unapproved.EX-MICROD-15-M,part-unapproved,warning,EX-MICROD-15-M,Part EX-MICROD-15-M is not approved yet but is used (1 place(s)),,,ESCC3901-4.4

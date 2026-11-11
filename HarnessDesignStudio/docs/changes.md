@@ -25,6 +25,13 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-11: version 1.17.1rc2 (the stored hashes are written again with the new stamp; nothing else changes)
+
+- **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with `1.17.1rc1` (`BASE_VERSION` 1.17.1rc1).
+- **Now.** They were written again with `1.17.1rc2`, and `BASE_VERSION` is `1.17.1rc2`. Both strings have nine characters, so the comparison could have replaced the stamp; the files were written again so that the stored hashes are those of the version that is released.
+- **Why.** 1.17.1rc1 was never published (its two release runs stopped before a package was attached); the release candidate that replaces it is 1.17.1rc2 (D-224).
+- **What moved.** Only the version stamp and the hashes that include it (the model hash, and the SHA-256 of each written file). The diff of the three files holds no other change: no number, no finding, no text.
+
 ### 2026-11-10: version 1.17.1rc1, a longer version string (the stored hashes are written again; nothing else changes)
 
 - **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with a six-character version (`BASE_VERSION` 1.10.0), and the comparison replaced the stamp of 1.17.0 with it.
