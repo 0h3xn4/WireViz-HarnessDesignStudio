@@ -8,6 +8,7 @@ The inherited WireViz workflow `main.yml` is upstream's file, kept byte for byte
 apply to it: it has unpinned actions and no `permissions` (owner-checklist.md B3 and C: disable it
 in the Actions tab if it is not needed). It is still checked for secrets on pull requests."""
 
+import ast
 import json
 import re
 from pathlib import Path
@@ -94,3 +95,38 @@ def test_codeql_leaves_out_only_the_upstream_wireviz_files() -> None:
     hit = [f for f in python if any(fnmatch.fnmatch(f, g) for g in ignored)]
     assert hit and set(hit) <= UPSTREAM, set(hit) - UPSTREAM
     assert {f for f in UPSTREAM if f.endswith(".py")} <= set(hit)
+
+
+TEST_ID = re.compile(r"(?<![\w/])tests/[\w/]+\.py(?:::[\w]+)*")
+
+
+def _defined(tree: ast.Module, names: list[str]) -> bool:
+    body: list[ast.stmt] = tree.body
+    for name in names:
+        found = [
+            node
+            for node in body
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+            and node.name == name
+        ]
+        if not found:
+            return False
+        body = found[0].body if isinstance(found[0], ast.ClassDef) else []
+    return True
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=_id)
+def test_every_test_a_workflow_names_exists(path: Path) -> None:
+    """A workflow that names a test file or a test that is gone makes pytest stop with "not found"
+    (exit 4). The docs-only job of harness-ci.yml named a test renamed by #208, and only a pull
+    request that changed documents alone showed it."""
+    missing = []
+    for ident in sorted(set(TEST_ID.findall(path.read_text(encoding="utf-8")))):
+        file, *names = ident.split("::")
+        source = ROOT / file
+        gone = not source.is_file() or (
+            bool(names) and not _defined(ast.parse(source.read_text("utf-8")), names)
+        )
+        if gone:
+            missing.append(ident)
+    assert not missing, missing
