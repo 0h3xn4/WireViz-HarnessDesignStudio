@@ -10,6 +10,10 @@ applicability tables (ECSS-E-ST-40C Table R-1, ECSS-Q-ST-80C Table D-2) are read
 nothing is cited from memory. Columns that are a judgement (type, harness relevance, automation) are
 proposals, listed with `basis` and reviewed in compliance/gap_analysis.md; per-requirement
 corrections are in compliance/requirements/overrides.csv and are merged here.
+
+The lists it writes hold the text of the requirements, which is ESA's: they stay on the computer
+that has the standards and are ignored by Git (the owner's decision of 2026-11-10, D-221). Only
+overrides.csv, our own classification, is in the repository.
 """
 
 import csv
@@ -39,9 +43,17 @@ HEADING = re.compile(
 )
 # top-level headings such as "6.12 Connectors RF" use a single space and no indent
 HEADING_TOP = re.compile(r"^((?:\d+\.\d+))\s([A-Z]\S.*?)\s*$")
-FOOTER = re.compile(
-    r"^\s*(ECSS-[A-Z]-ST-[0-9A-Za-z-]+C Rev\.\d+|\d{1,2} \w+ \d{4}|\d{1,3})\s*$|^\s*\f"
-)
+# a page footer: the standard and its revision, a date or a page number alone on a line, or a page
+# break (two patterns and a function, so that no anchor stands between two alternatives)
+FOOTER_TEXT = re.compile(r"ECSS-[A-Z]-ST-[0-9A-Za-z-]+C Rev\.\d+|\d{1,2} \w+ \d{4}|\d{1,3}")
+PAGE_BREAK = re.compile(r"\s*\f")
+
+
+def is_footer(line: str) -> bool:
+    """A line that is only a footer (the standard, a date or a page number), or a page break."""
+    return bool(FOOTER_TEXT.fullmatch(line.strip()) or PAGE_BREAK.match(line))
+
+
 LETTER = re.compile(r"^\s*([a-z])\.\s+(.*)")
 NONNORMATIVE = re.compile(r"^\s*(NOTE|EXAMPLE)s?\b")
 EXPECTED = re.compile(r"^\s*EXPECTED OUTPUT")
@@ -119,7 +131,7 @@ def parse_ecss(standard: str, lines: list[str]) -> list[Req]:
                 continue
         if current is None:
             continue
-        if FOOTER.match(line) or not line.strip():
+        if is_footer(line) or not line.strip():
             continue
         if EXPECTED.match(line):
             mode = "output"

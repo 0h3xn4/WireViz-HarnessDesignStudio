@@ -10,8 +10,8 @@ These sections were moved word for word from [`CLAUDE.md`](../../../CLAUDE.md) o
 - If you change what the tutorial prints (the example, the sizing, the drawings), update `docs/GETTING_STARTED.md` and `docs/img/` (a test checks the commands and the quoted model hash).
 
 ## Compliance audit (ECSS/ESCC)
-`compliance/` (requirement lists, assessment, matrix, gap analysis, evidence, process documents), `core/standard_profiles.py` (optional value profiles, D-131), `core/drc/standard_rules.py` (rules that apply the supplied standards), `tools/extract_requirements.py`, `tools/build_compliance_matrix.py`, `tools/trace.py`, `tools/metrics.py`, `tools/gen_scf.py`.
-- Never add a standard value as a default; profiles fill unset values only and cite a requirement ID that exists in `compliance/requirements` (a test checks it).
+`compliance/` (assessment, gap analysis, evidence, process documents; the requirement lists and the matrix quote the standards and are made locally only, D-221), `core/standard_profiles.py` (optional value profiles, D-131), `core/drc/standard_rules.py` (rules that apply the supplied standards), `tools/extract_requirements.py`, `tools/build_compliance_matrix.py`, `tools/trace.py`, `tools/metrics.py`, `tools/gen_scf.py`.
+- Never add a standard value as a default; profiles fill unset values only and cite a requirement ID that has a row in `compliance/assessment/design_assessment.csv` (a test checks it).
 - A new rule that serves a requirement names it in `sources=`; a rule that needs a number stays silent without it and adds a line to `standard_rules.unchecked`.
-- Rebuild after changing assessments: `python -m tools.build_compliance_matrix`, `python -m tools.trace`, and after adding or moving modules `python -m tools.gen_sdd_components` (every module needs a docstring); the outputs are checked for freshness by tests.
+- Rebuild after changing assessments: `python -m tools.trace` (and, where the standards are at hand, `python -m tools.build_compliance_matrix` locally; its output is not committed), and after adding or moving modules `python -m tools.gen_sdd_components` (every module needs a docstring); the outputs are checked for freshness by tests.
 

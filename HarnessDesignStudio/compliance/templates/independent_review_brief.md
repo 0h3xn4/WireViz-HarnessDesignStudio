@@ -23,14 +23,14 @@ Statement of independence and date:
 3. `docs/SPEC.md` and `docs/REQUIREMENTS.md`: what the owner asked for.
 4. `compliance/traceability.csv` and `compliance/sdd_components.csv`: requirement to test, requirement to component.
 5. `compliance/docs/SVerP.md`, `SVR.md`, `SValP_SVS.md`, `SUITP.md`: how verification and validation were planned, and what the developer reports.
-6. `compliance/gap_analysis.md` and `compliance/compliance_matrix.csv`: the assessment against ECSS-E-ST-40C, ECSS-Q-ST-80C, ECSS-Q-ST-30-11C, ECSS-E-ST-20-07C and ESCC 3901. The requirement texts are abbreviated; the standard is authoritative.
+6. `compliance/gap_analysis.md` and `compliance/compliance_matrix.csv` (made locally from the standards with the two tools named in `compliance/README.md`; not in the repository, D-221): the assessment against ECSS-E-ST-40C, ECSS-Q-ST-80C, ECSS-Q-ST-30-11C, ECSS-E-ST-20-07C and ESCC 3901. The requirement texts are abbreviated; the standard is authoritative.
 7. `compliance/evidence/` and `compliance/metrics.json`: test results, release report, coverage.
 8. `docs/RELEASE.md` and `docs/SECURITY.md`.
 
 ## Do yourself, do not take on trust
 1. Install from the package or the source (`docs/INSTALL.md`) and run the tests (`pytest`; with `--cov` for the coverage gate). Compare the counts with the release report in `compliance/evidence/`.
 2. Pick **ten requirements** at random from `compliance/traceability.csv`. For each: open the named test, confirm it really checks the requirement (not just that it passes), and break the code on purpose to see it fail.
-3. Pick **ten rows** of `compliance/compliance_matrix.csv` with status *partial*. Read the cited evidence. Does it support "partial"? Would a stricter reader say *gap*?
+3. Pick **ten rows** of the matrix (or of `compliance/assessment/*.csv`) with status *partial*. Read the cited evidence. Does it support "partial"? Would a stricter reader say *gap*?
 4. Take a small harness (`harness new` from an example), generate, verify and export it. Check three pins, three wire lengths and one mass by hand against the outputs.
 5. Check that a rule silent without its number says so (`unchecked-config` in the design rule report).
 6. Check the release gate: change a released harness and see that the tool refuses.

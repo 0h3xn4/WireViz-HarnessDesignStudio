@@ -633,7 +633,6 @@ class ChangeDialog(Dialog):
         unlocks: lock_tree.RevisionUnlocks | None = None,
         rule_note: str = "",
         roles_check: Callable[[str, str], list[str]] | None = None,
-        by_tip: str = "",
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -693,7 +692,6 @@ class ChangeDialog(Dialog):
         lay.addWidget(QLabel(strings.YOUR_NAME))
         self.by = QLineEdit(by)
         self.by.setObjectName("change-by")
-        self.by.setToolTip(by_tip)
         lay.addWidget(self.by)
         self.by.setAccessibleName(strings.YOUR_NAME)
         self.checker = QLineEdit()
@@ -779,7 +777,6 @@ class ChangeDialog(Dialog):
         placeholders: list[str] | None = None,
         unapproved_parts: list[str] | None = None,
         roles_check: Callable[[str, str], list[str]] | None = None,
-        by_tip: str = "",
         loose_ends: list[str] | None = None,
     ) -> ChangeDialog:
         """The release dialog: asks the questions and lists everything the release will lock.
@@ -798,7 +795,6 @@ class ChangeDialog(Dialog):
             locks=release_locks(project, harness_id),
             rule_note=strings.ROLES_RELEASE_NOTE if roles_check is not None else "",
             roles_check=roles_check,
-            by_tip=by_tip,
         )
 
     @classmethod

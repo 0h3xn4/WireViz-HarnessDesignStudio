@@ -1,0 +1,16 @@
+# Local files of Harness Design Studio work. They were listed in the root .gitignore until the
+# upstream WireViz files (that one included) were restored to the fork base (decision D-220).
+.venv/
+build/
+dist/
+wheelhouse/
+.coverage
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+# The requirement lists and the compliance matrix hold the text of ECSS and ESCC requirements, which
+# is not ours: they are made locally from the standards and never committed (decision D-221).
+compliance/requirements/ECSS-*.csv
+compliance/requirements/ESCC-*.csv
+compliance/compliance_matrix.csv

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import re
 from pathlib import Path
-from collections.abc import Callable
+from typing import Callable, Dict, List, Union
 
 from wireviz import APP_NAME, APP_URL, __version__, wv_colors
 from wireviz.DataClasses import Metadata, Options
@@ -15,8 +17,8 @@ from wireviz.wv_helper import (
 
 
 def generate_html_output(
-    filename: str | Path,
-    bom_list: list[list[str]],
+    filename: Union[str, Path],
+    bom_list: List[List[str]],
     metadata: Metadata,
     options: Options,
 ):
@@ -104,9 +106,9 @@ def generate_html_output(
         for item, contents in metadata.items():
             if isinstance(contents, (str, int, float)):
                 replacements[f"<!-- %{item}% -->"] = html_line_breaks(str(contents))
-            elif isinstance(contents, dict):  # useful for authors, revisions
+            elif isinstance(contents, Dict):  # useful for authors, revisions
                 for index, (category, entry) in enumerate(contents.items()):
-                    if isinstance(entry, dict):
+                    if isinstance(entry, Dict):
                         replacements[f"<!-- %{item}_{index+1}% -->"] = str(category)
                         for entry_key, entry_value in entry.items():
                             replacements[

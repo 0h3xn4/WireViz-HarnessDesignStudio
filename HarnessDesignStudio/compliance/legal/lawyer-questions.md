@@ -33,6 +33,8 @@ Date: 2026-11-09. Written by an AI (Claude, through Claude Code) for the project
 
 ## Q-6. Reproducing ECSS and ESCC requirement text
 
+**Update 2026-11-10.** The owner had the requirement text removed from the repository (D-221); it remains in the Git history. Questions (a) and (b) now concern only that history and our IDs and clause numbers in `compliance/assessment/`; (c) and (d) are unchanged. The owner declined a lawyer review (owner-checklist B8).
+
 **Background.** `compliance/requirements/*.csv` hold about 1,900 rows of requirement text copied from ECSS-E-ST-40C, ECSS-Q-ST-80C, ECSS-Q-ST-30-11C, ECSS-E-ST-20-07C and ESCC-3901, up to 600 characters per row. The PDFs are not in the repo. The CSVs are in the public repo but not in the packages. The tool also ships optional "standard profiles" with table values from the standards. ESA holds the copyright of ECSS documents. The ECSS reproduction clause was not read at source.
 **Questions.** (a) May the owner publish this text, and under which conditions? (b) May short extracts (IDs, clause numbers, titles) stay? (c) May the table values in the profiles stay, and with which notice? (d) Does the reference to the standards in outputs (requirement IDs on checks) need a disclaimer of compliance?
 

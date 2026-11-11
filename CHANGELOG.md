@@ -11,4 +11,4 @@ The two version numbers are unrelated. `harness-design-studio --version` prints 
 
 `harness-design-studio --version` prints the version of the tool that you have, for example `harness 1.16.0`. The older 0.1.0 packages list three examples with `harness-design-studio new --list`; version 1.0.0 and later list five.
 
-Next: [documentation index](docs/README.md).
+Next: [documentation index](docs/INDEX.md).

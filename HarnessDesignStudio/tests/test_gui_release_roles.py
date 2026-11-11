@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-08, F-07 (1.9.0): the release dialogs with the project setting `release_distinct_roles`
-on: a note says three different people are required, the name that Git has is the default, the
-checker is asked for as required, and OK says in words which two names are the same. With the
+on: a note says three different people are required, the name is typed (none is taken from Git
+or from the computer, D-222), the checker is asked for as required, and OK says in words which two names are the same. With the
 setting off the dialogs are as they were."""
 
 import pytest
@@ -91,7 +91,9 @@ def test_on_ok_waits_for_an_author_and_for_three_different_names(win) -> None:  
     dlg.placeholder_reason.setText(REASON)
     dlg.parts_reason.setText(REASON)
     dlg.by.setText("Ada")
-    assert not dlg.ok.isEnabled() and "Name the person who checked it" in dlg.hint.text()
+    assert (
+        not dlg.ok.isEnabled() and "Type the name of the person who checked it" in dlg.hint.text()
+    )
     dlg.checker.setText("ada")
     assert not dlg.ok.isEnabled() and "checker and the person who releases it" in dlg.hint.text()
     dlg.checker.setText("Ann")
@@ -114,18 +116,22 @@ def test_on_a_harness_with_no_author_cannot_be_released_from_the_dialog(win) -> 
     assert not dlg.ok.isEnabled() and "Nobody is recorded as the author" in dlg.hint.text()
 
 
-def test_the_name_git_has_is_the_default_only_with_the_setting_on(  # type: ignore[no-untyped-def]
+def test_no_name_is_taken_from_git_or_the_computer_only_a_typed_one(  # type: ignore[no-untyped-def]
     win, tmp_path, monkeypatch
 ) -> None:
+    """D-222: with the setting off or on, the name field starts empty; a name the person typed
+    before is offered again."""
     cfg = tmp_path / "gitconfig"
     cfg.write_text("[user]\n\tname = Ann Author\n", encoding="utf-8")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(cfg))
+    monkeypatch.setenv("USER", "login-name")
+    monkeypatch.setenv("USERNAME", "login-name")
     hid = hid_of(win)
-    assert win._user_name() != "Ann Author"  # off: the name of the account, as before
+    assert win._user_name() == ""
     switch_on(win)
-    assert win._user_name() == "Ann Author"
+    assert win._user_name() == ""
     dlg = shown(win, "review", hid)
-    assert dlg.by.text() == "Ann Author" and dlg.by.toolTip() == strings.NAME_FROM_GIT_TIP
-    win.settings.setValue("ui/user", "Saved Name")  # a name saved by the person comes first
+    assert dlg.by.text() == "" and dlg.by.toolTip() == ""
+    win.settings.setValue("ui/user", "Saved Name")  # a name the person typed before
     assert win._user_name() == "Saved Name"
-    assert shown(win, "review", hid).by.toolTip() == ""
+    assert shown(win, "review", hid).by.text() == "Saved Name"

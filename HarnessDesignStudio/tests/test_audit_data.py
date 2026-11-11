@@ -175,13 +175,14 @@ def test_stale_lock_takeover_gives_the_lock_to_exactly_one_process(tmp_path: Pat
     from typing import Any
 
     from harness_design_studio.core.io.fs import LOCK_NAME
+    from harness_design_studio.core.io.fs import install_id as fs_install_id
 
     # fork where there is one; Windows has only spawn (slower, so fewer rounds)
     forking = "fork" in mp.get_all_start_methods()
     ctx: Any = mp.get_context("fork" if forking else "spawn")
     for _ in range(8 if forking else 2):
         (tmp_path / LOCK_NAME).write_text(
-            json.dumps({"pid": 2**22 + 12345, "host": __import__("platform").node(), "since": 1})
+            json.dumps({"pid": 2**22 + 12345, "install": fs_install_id(), "since": 1})
         )
         barrier = ctx.Barrier(5)
         out = ctx.Queue()

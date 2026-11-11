@@ -107,7 +107,7 @@ from harness_design_studio.core.vcs.release import (
     unapproved_parts,
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
-from harness_design_studio.core.vcs.roles import default_name, distinct_roles_on
+from harness_design_studio.core.vcs.roles import distinct_roles_on
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import areas, diagram_export, recent, strings
 from harness_design_studio.gui.asbuilt_page import AsBuiltPage
@@ -3486,23 +3486,10 @@ class MainWindow(QMainWindow):
         progress.reset()
         progress.deleteLater()
 
-    def _git_name(self) -> str:
-        """The name Git has for this person, when the project requires different people in a
-        release (config/naming.json release_distinct_roles) and no name was saved here; else ''."""
-        if str(self.settings.value("ui/user", "") or ""):
-            return ""
-        return default_name(self.ctl.project, self.ctl.root) or ""
-
     def _user_name(self) -> str:
-        saved = str(self.settings.value("ui/user", "") or "") or self._git_name()
-        if saved:
-            return saved
-        try:
-            import getpass
-
-            return getpass.getuser()
-        except OSError, KeyError, ImportError:
-            return ""
+        """The name to put in the dialog: the one the person typed last time, else empty, so the
+        person types one. No name is taken from Git or from the computer (decision D-222)."""
+        return str(self.settings.value("ui/user", "") or "")
 
     def change_flow(self, action: str, hid: str) -> None:
         """Review, release, new revision, changes and change log for one harness."""
@@ -3530,7 +3517,6 @@ class MainWindow(QMainWindow):
                 ask_comment=False,
                 ok_text=strings.REVIEW_CONFIRM,
                 rule_note=strings.ROLES_REVIEW_NOTE if distinct_roles_on(project) else "",
-                by_tip=strings.NAME_FROM_GIT_TIP if self._git_name() else "",
             )
         elif action == "release":
             # the dialog asks for the reason itself, so a stand-in keeps that blocker out of the list
@@ -3560,7 +3546,6 @@ class MainWindow(QMainWindow):
                     if distinct_roles_on(project)
                     else None
                 ),
-                by_tip=strings.NAME_FROM_GIT_TIP if self._git_name() else "",
             )
         else:
             dlg = ChangeDialog.for_revise(

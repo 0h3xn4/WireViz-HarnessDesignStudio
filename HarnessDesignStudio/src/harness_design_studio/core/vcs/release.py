@@ -207,8 +207,9 @@ def role_blockers(
         out.append(
             Blocker(
                 "checker_missing",
-                "Name the person who checked it: this project requires an author, a checker and "
-                "a person who releases, all different.",
+                "Type the name of the person who checked it: this project requires an author, a "
+                "checker and a person who releases, all different, and every name is typed (none "
+                "is taken from Git or from the computer).",
                 about="checker",
             )
         )

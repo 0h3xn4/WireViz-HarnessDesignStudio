@@ -72,6 +72,6 @@ Open an issue on GitHub (see [`.github/SUPPORT.md`](.github/SUPPORT.md) for what
 
 ## Change the documents
 
-Documents are part of the product: a test checks every link and runs the commands of the tutorial. Which files are generated, how to add a page and how to check the links: [`HarnessDesignStudio/docs/developer/docs-maintenance.md`](HarnessDesignStudio/docs/developer/docs-maintenance.md). The index of all documents is [`docs/README.md`](docs/README.md). The WireViz README embedded in the root [`README.md`](README.md) is refreshed with [`HarnessDesignStudio/docs/developer/upstream-sync.md`](HarnessDesignStudio/docs/developer/upstream-sync.md); do not edit it by hand.
+Documents are part of the product: a test checks every link and runs the commands of the tutorial. Which files are generated, how to add a page and how to check the links: [`HarnessDesignStudio/docs/developer/docs-maintenance.md`](HarnessDesignStudio/docs/developer/docs-maintenance.md). The index of all documents is [`docs/INDEX.md`](docs/INDEX.md). The WireViz README embedded in the root [`README.md`](README.md) is refreshed with [`HarnessDesignStudio/docs/developer/upstream-sync.md`](HarnessDesignStudio/docs/developer/upstream-sync.md); do not edit it by hand.
 
 Next: [`HarnessDesignStudio/docs/developer/README.md`](HarnessDesignStudio/docs/developer/README.md).

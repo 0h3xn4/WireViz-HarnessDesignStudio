@@ -15,7 +15,7 @@ LICENCE = "Harness Design Studio is licensed under the GNU General Public Licenc
 WIREVIZ_RELATION = "Harness Design Studio does not copy or import WireViz code."
 NON_AFFILIATION = "Harness Design Studio is a personal project. It is not affiliated with or endorsed by the WireViz project, Anthropic or any other company or project named here."
 TRADEMARKS = "All product names and trademarks belong to their owners and are used only to describe compatibility or facts."
-PRIVACY_APP = "The app collects no personal data and sends nothing over the network. All files stay on your computer."
+PRIVACY_APP = "The app collects no personal data and sends nothing over the network. All files stay on your computer. A name is written into a file only when you type it (as the author of a change, a run or a release); the app looks up no user name and no computer name."
 OUTPUT_NOTICE = "{tool} {version}. Provided as is, without warranty. Verify before use."
 
 

@@ -19,8 +19,8 @@ Harness Design Studio supports harness design work. Every harness design must be
 WIREVIZ
 This repository also contains WireViz (the folders src/wireviz, docs, examples and tutorial at the
 top of the repository). WireViz is copyright its contributors and is licensed under the GPL-3.0; the
-fork was made from WireViz 0.4.1 (commit e4fe099f). Some of those files were changed after the
-fork (formatting and changes for Python 3.14; see the git history, for example commit a4431e2a).
+fork was made from WireViz 0.4.1 (commit e4fe099f). Those files are unchanged: each is byte for
+byte as at that commit (some had been changed after the fork and were restored on 2026-11-10).
 They are not part of the folder HarnessDesignStudio/. Harness Design Studio does not copy or import WireViz code.
 
 NAMES

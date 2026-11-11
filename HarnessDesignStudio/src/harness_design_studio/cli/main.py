@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="NAME",
         help="who is making the changes of this run, for the change journal (before the command); "
-        "default: the environment variable HARNESS_AUTHOR, else the name Git has, else the user",
+        "default: the environment variable HARNESS_AUTHOR, else unknown (no name is looked up)",
     )
     sub = parser.add_subparsers(dest="command")
     for name, text in (
@@ -214,7 +214,7 @@ def _generate(path: Path, rep: Report | None = None, args: argparse.Namespace | 
     if rep.as_json:
         rep.put(**records.generate_result(plan, report, saved=True).to_dict())
     if args is not None:
-        open_data.write_record(project, path, path / DEFAULT_FOLDER, args, rep)
+        open_data.write_record(project, path / DEFAULT_FOLDER, args, rep)
     if project.links and not project.interfaces:  # connections are exported as they are
         rep.say(
             f"{len(project.links)} connection(s) and no interface: Generate wires interfaces "
@@ -266,7 +266,7 @@ def _export(
     write_outputs(project, target, result)
     rep.say(f"{len(result.files)} files written to {target} (model {result.stamp.short}).")
     if args is not None:
-        open_data.write_record(project, path, target, args, rep)
+        open_data.write_record(project, target, args, rep)
     if had_drawings and not drawings:
         rep.say(
             "The PDF drawings of the earlier export were removed; "

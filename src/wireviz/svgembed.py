@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+
 import base64
 import re
 from pathlib import Path
+from typing import Union
 
 mime_subtype_replacements = {"jpg": "jpeg", "tif": "tiff"}
 
 
 # TODO: Share cache and code between data_URI_base64() and embed_svg_images()
-def data_URI_base64(file: str | Path, media: str = "image") -> str:
+def data_URI_base64(file: Union[str, Path], media: str = "image") -> str:
     """Return Base64-encoded data URI of input file."""
     file = Path(file)
     b64 = base64.b64encode(file.read_bytes()).decode("utf-8")
@@ -19,7 +22,7 @@ def data_URI_base64(file: str | Path, media: str = "image") -> str:
     return uri
 
 
-def embed_svg_images(svg_in: str, base_path: str | Path = Path.cwd()) -> str:
+def embed_svg_images(svg_in: str, base_path: Union[str, Path] = Path.cwd()) -> str:
     images_b64 = {}  # cache of base64-encoded images
 
     def image_tag(pre: str, url: str, post: str) -> str:
@@ -44,7 +47,7 @@ def embed_svg_images(svg_in: str, base_path: str | Path = Path.cwd()) -> str:
     return pattern.sub(replace, svg_in)
 
 
-def get_mime_subtype(filename: str | Path) -> str:
+def get_mime_subtype(filename: Union[str, Path]) -> str:
     mime_subtype = Path(filename).suffix.lstrip(".").lower()
     if mime_subtype in mime_subtype_replacements:
         mime_subtype = mime_subtype_replacements[mime_subtype]
@@ -52,7 +55,7 @@ def get_mime_subtype(filename: str | Path) -> str:
 
 
 def embed_svg_images_file(
-    filename_in: str | Path, overwrite: bool = True
+    filename_in: Union[str, Path], overwrite: bool = True
 ) -> None:
     filename_in = Path(filename_in).resolve()
     filename_out = filename_in.with_suffix(".b64.svg")

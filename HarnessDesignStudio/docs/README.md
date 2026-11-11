@@ -1,6 +1,6 @@
 # Documentation map of Harness Design Studio
 
-This page lists the documents of the tool, grouped by what you want to do. The index of the whole repository (including the WireViz documents) is [`../../docs/README.md`](../../docs/README.md).
+This page lists the documents of the tool, grouped by what you want to do. The index of the whole repository (including the WireViz documents) is [`../../docs/INDEX.md`](../../docs/INDEX.md).
 
 ## Contents
 

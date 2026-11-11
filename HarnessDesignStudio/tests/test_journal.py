@@ -470,7 +470,7 @@ def test_explain_of_a_project_without_a_journal_has_no_history(tmp_path, capsys)
 # ---- who is working ----------------------------------------------------------------------------
 
 
-def test_the_author_is_the_option_then_the_environment_then_git_then_the_user(
+def test_the_author_is_the_option_then_the_environment_never_git_or_the_system_user(
     tmp_path, monkeypatch
 ):
     git = tmp_path / "gitconfig"
@@ -479,7 +479,7 @@ def test_the_author_is_the_option_then_the_environment_then_git_then_the_user(
     monkeypatch.delenv("HARNESS_AUTHOR", raising=False)
     monkeypatch.setenv("USER", "login")
     journal.set_author(None)
-    assert journal.author() == "Git Person"
+    assert journal.author() == "unknown"  # the Git name is not read (D-222)
     monkeypatch.setenv("HARNESS_AUTHOR", "From Env")
     assert journal.author() == "From Env"
     journal.set_author("From Option")
@@ -490,10 +490,9 @@ def test_the_author_is_the_option_then_the_environment_then_git_then_the_user(
     monkeypatch.delenv("HARNESS_AUTHOR")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.chdir(tmp_path)
-    assert journal.author() == "login"
-    monkeypatch.delenv("USER")
-    monkeypatch.delenv("USERNAME", raising=False)
-    monkeypatch.delenv("LOGNAME", raising=False)  # resolve_author reads it after USER and USERNAME
+    assert journal.author() == "unknown"  # the login name "login" is not read (D-222)
+    monkeypatch.setenv("USERNAME", "winlogin")
+    monkeypatch.setenv("LOGNAME", "logname")
     assert journal.author() == "unknown"
 
 
