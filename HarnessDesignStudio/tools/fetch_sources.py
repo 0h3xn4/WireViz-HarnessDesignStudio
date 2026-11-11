@@ -12,8 +12,12 @@ fetches
   package, from download.qt.io, and checks each against the SHA-256 sum that download.qt.io publishes
   for it (`<file>.sha256`; Qt for Python has no `md5sums.txt` beside its source);
 - the Debian source package (`.dsc`, `.orig.tar.*`, `.debian.tar.*`) of every library of the
-  operating system that the package carries, in the version in the inventory, with `apt-get source`
-  (the machine needs `deb-src` lines; the release workflow adds them).
+  operating system that the package carries. The binary package of the inventory is mapped to its
+  source package and source version with `dpkg-query` (the libraries are installed on the machine
+  that built the package). `apt-get source` fetches it when the archive index still lists that
+  version (the machine needs `deb-src` lines; the release workflow adds them). The index lists only
+  the newest version of each pocket, so an older update is fetched from Launchpad, which keeps every
+  published version; each file is checked against the SHA-256 sums in its `.dsc`.
 
 It writes `SOURCES.txt` into DIR: the file name, size and SHA-256 of everything it fetched. The
 release workflow attaches the files to the release page, which is where the notices file says the
@@ -32,6 +36,7 @@ from pathlib import Path
 from typing import Any
 
 QT_BASE = "https://download.qt.io/official_releases"
+LAUNCHPAD_FILES = "https://launchpad.net/ubuntu/+archive/primary/+sourcefiles"
 QT_MODULES = ("qtbase", "qtsvg", "qtwayland")
 
 
@@ -103,18 +108,81 @@ def fetch_qt(version: str, out: Path) -> list[Path]:
     return got
 
 
+def source_of(binary: str, version: str) -> tuple[str, str]:
+    """(source package, source version) of an installed binary package, from `dpkg-query`."""
+    result = subprocess.run(  # noqa: S603 - our own arguments, no shell
+        ["dpkg-query", "-W", "-f=${Version}\t${source:Package}\t${source:Version}", binary],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    fields = result.stdout.strip().split("\t")
+    if result.returncode != 0 or len(fields) != 3:
+        raise SystemExit(f"dpkg-query {binary} failed:\n{result.stderr[-600:]}")
+    installed, source, source_version = fields
+    if installed != version:
+        raise SystemExit(
+            f"{binary}: {installed} is installed, but the package carries {version}; "
+            "the source must be fetched on the machine that built the package"
+        )
+    return source, source_version
+
+
+def dsc_files(dsc: str) -> list[tuple[str, str]]:
+    """(file name, SHA-256) of every file a `.dsc` lists under `Checksums-Sha256`."""
+    files: list[tuple[str, str]] = []
+    in_section = False
+    for line in dsc.splitlines():
+        if line.startswith("Checksums-Sha256:"):
+            in_section = True
+        elif in_section and line.startswith(" "):
+            sha, _size, name = line.split()
+            files.append((name, sha.lower()))
+        elif in_section:
+            break
+    if not files:
+        raise SystemExit("the .dsc lists no Checksums-Sha256")
+    return files
+
+
+def fetch_launchpad(source: str, version: str, out: Path) -> list[Path]:
+    """The source package `source` `version` from Launchpad, every file checked against its .dsc."""
+    plain = version.split(":", 1)[-1]  # file names carry no epoch
+    base = f"{LAUNCHPAD_FILES}/{source}/{version}"
+    dsc_name = f"{source}_{plain}.dsc"
+    dsc = _get(f"{base}/{dsc_name}")
+    (out / dsc_name).write_bytes(dsc)
+    got = [out / dsc_name]
+    for name, sha in dsc_files(dsc.decode("utf-8", "replace")):
+        data = _get(f"{base}/{name}")
+        if hashlib.sha256(data).hexdigest() != sha:
+            raise SystemExit(f"{name}: does not match the SHA-256 sum in {dsc_name}")
+        (out / name).write_bytes(data)
+        got.append(out / name)
+    return got
+
+
 def fetch_debian(packages: list[tuple[str, str]], out: Path) -> list[Path]:
     before = {p.name for p in out.iterdir()}
-    for name, version in packages:
+    sources = sorted({source_of(name, version) for name, version in packages})
+    from_launchpad: list[str] = []
+    for source, version in sources:
         result = subprocess.run(  # noqa: S603 - our own arguments, no shell
-            ["apt-get", "source", "--download-only", f"{name}={version}"],
+            ["apt-get", "source", "--download-only", f"{source}={version}"],
             cwd=out,
             capture_output=True,
             text=True,
             check=False,
         )
         if result.returncode != 0:
-            raise SystemExit(f"apt-get source {name}={version} failed:\n{result.stderr[-600:]}")
+            fetch_launchpad(source, version, out)
+            from_launchpad.append(f"{source}={version}")
+    if from_launchpad:
+        print(
+            f"{len(from_launchpad)} source package(s) from Launchpad (no longer in the archive "
+            f"index): {', '.join(from_launchpad)}",
+            file=sys.stderr,
+        )
     return sorted(p for p in out.iterdir() if p.name not in before)
 
 
