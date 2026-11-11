@@ -7,7 +7,8 @@
 
 Each entry holds what a card on Home shows (name, folder, counts, how many harnesses are in each
 state), so Home needs to read no project to draw it. The list is kept newest first, without
-duplicates, at most `LIMIT` long. A damaged value in the settings reads as an empty list.
+duplicates, at most `LIMIT` long. A damaged value in the settings reads as an empty list. `clear`
+empties it (Home's *Clear list*); no project folder is read or changed by any of this.
 """
 
 import json
@@ -69,3 +70,8 @@ def remember(settings: SettingsLike, entry: RecentEntry) -> bool:
 
 def forget(settings: SettingsLike, path: str) -> None:
     settings.setValue(KEY, json.dumps([asdict(e) for e in load(settings) if e.path != path]))
+
+
+def clear(settings: SettingsLike) -> None:
+    """Empty the list: the names and folders it kept are gone from the settings."""
+    settings.setValue(KEY, json.dumps([]))

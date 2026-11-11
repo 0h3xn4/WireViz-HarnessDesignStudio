@@ -5,8 +5,10 @@
     home = HomePage(theme, new=..., open_=..., example=..., sample=...)
     home.show_project(name, path, summary)
 
-It only shows and calls back; the window does the work. Home is the first screen of a project:
-what is open and how to start another.
+It only shows and calls back; the window does the work. Home is the first screen of the program
+(the landing page, `set_landing`: nothing is open yet, so the card of the open project is left out)
+and of a project: what is open and how to start another. The recent projects are listed newest
+first; *Clear list* empties the list (the window asks first) and touches no project folder.
 """
 
 from collections.abc import Callable, Sequence
@@ -59,7 +61,10 @@ def _page(theme: ThemeManager, name: str, title: str) -> tuple[QScrollArea, QVBo
     return scroll, column
 
 
-def _card(theme: ThemeManager, heading: str) -> tuple[QFrame, QVBoxLayout]:
+def _card(
+    theme: ThemeManager, heading: str, action: QWidget | None = None
+) -> tuple[QFrame, QVBoxLayout]:
+    """A card with its heading; `action` (a button) sits at the right end of the heading's line."""
     card = QFrame()
     card.setProperty("card", True)
     lay = QVBoxLayout(card)
@@ -67,7 +72,13 @@ def _card(theme: ThemeManager, heading: str) -> tuple[QFrame, QVBoxLayout]:
     lay.setSpacing(theme.space(8))
     label = QLabel(heading)
     label.setProperty("heading", True)
-    lay.addWidget(label)
+    if action is None:
+        lay.addWidget(label)
+        return card, lay
+    line = QHBoxLayout()
+    line.addWidget(label, 1)
+    line.addWidget(action, 0, Qt.AlignmentFlag.AlignVCenter)
+    lay.addLayout(line)
     return card, lay
 
 
@@ -84,18 +95,29 @@ class HomePage(QScrollArea):
         open_recent: Callable[[str], None] | None = None,
         forget_recent: Callable[[str], None] | None = None,
         open_example: Callable[[str], None] | None = None,
+        clear_recent: Callable[[], object] | None = None,
     ) -> None:
         super().__init__()
         self.theme = theme
         self._open_recent = open_recent or (lambda _p: None)
         self._forget_recent = forget_recent or (lambda _p: None)
+        self._clear_recent = clear_recent or (lambda: None)
         page, column = _page(theme, "home-page", strings.HOME_TITLE)
         self.setObjectName("home-page")
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setWidget(page.takeWidget())
         self.setAccessibleName(strings.HOME_TITLE)
+        # the landing page (the start of the program): one line instead of the open project's card
+        self.landing_note = QLabel(strings.HOME_LANDING)
+        self.landing_note.setObjectName("home-landing")
+        self.landing_note.setWordWrap(True)
+        self.landing_note.setProperty("muted", True)
+        self.landing_note.setAccessibleName(strings.HOME_LANDING)
+        self.landing_note.hide()
+        column.addWidget(self.landing_note)
         card, lay = _card(theme, strings.HOME_PROJECT)
+        self.project_card = card
         self.name = ElidedLabel()
         self.name.setProperty("title", True)
         self.name.setObjectName("home-name")
@@ -131,8 +153,15 @@ class HomePage(QScrollArea):
         row.addStretch(1)
         start_lay.addLayout(row)
         column.addWidget(start)
-        # recent projects: a card each, filled by `set_recent`
-        self.recent_card, self.recent_lay = _card(theme, strings.HOME_RECENT)
+        # recent projects: a card each, filled by `set_recent`, newest first; Clear list empties it
+        self.clear_btn = QPushButton(strings.HOME_CLEAR)
+        self.clear_btn.setObjectName("home-recent-clear")
+        self.clear_btn.setProperty("ghost", True)
+        self.clear_btn.setAccessibleName(strings.HOME_CLEAR_NAME)
+        self.clear_btn.setToolTip(strings.HOME_CLEAR_TIP)
+        self.clear_btn.clicked.connect(lambda _c=False: self._clear_recent())
+        self.clear_btn.hide()  # shown while the list has an entry
+        self.recent_card, self.recent_lay = _card(theme, strings.HOME_RECENT, self.clear_btn)
         self.recent_empty = QLabel(strings.HOME_RECENT_NONE)
         self.recent_empty.setProperty("muted", True)
         self.recent_empty.setWordWrap(True)
@@ -179,6 +208,7 @@ class HomePage(QScrollArea):
             w.deleteLater()
         self.recent_rows = []
         self.recent_empty.setVisible(not entries)
+        self.clear_btn.setVisible(bool(entries))
         for e in entries:
             card = QWidget()
             card.setObjectName("home-recent")
@@ -226,6 +256,15 @@ class HomePage(QScrollArea):
             lay.addWidget(drop, 0, Qt.AlignmentFlag.AlignTop)
             self.recent_lay.addWidget(card)
             self.recent_rows.append(card)
+
+    def set_landing(self, on: bool) -> None:
+        """The landing page of the program's start (`on`): no project of the person's is open, so
+        the card of the open project gives way to one line that says how to start."""
+        self.landing_note.setVisible(on)
+        self.project_card.setVisible(not on)
+
+    def landing(self) -> bool:
+        return not self.landing_note.isHidden()
 
     def show_project(self, name: str, path: str, summary: str) -> None:
         self.name.set_full_text(name)

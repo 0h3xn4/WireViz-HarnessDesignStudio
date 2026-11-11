@@ -286,14 +286,14 @@ Then start **Harness Design Studio** from the Start menu and continue with [Your
 | The editor does not appear, or a black or empty window shows | Update the graphics driver, then run the self-test above to see whether the program itself is intact. |
 | Your company blocks programs in `%LOCALAPPDATA%` | Ask for an exception for the install folder, or run the portable `.zip` from a folder that is allowed. |
 
-Settings (theme, scale, role, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
+Settings (theme, scale, role, window layout, the recent projects (each one's name and folder; **Clear list** on Home empties the list); no device, interface or part data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
 
 ## Where things are stored
 
 | What | Where |
 | --- | --- |
 | Your projects | wherever you saved them (a folder per project) |
-| App settings (theme, scale, role, last project) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
+| App settings (theme, scale, role, window layout, the recent projects (each one's name and folder; **Clear list** on Home empties the list)) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no device, interface or part data) |
 | Autosave of an open project | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 
 Next: [`GETTING_STARTED.md`](GETTING_STARTED.md).

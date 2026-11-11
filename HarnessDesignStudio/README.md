@@ -72,6 +72,8 @@ Harness Design Studio does not copy or import WireViz code. It lives in a fork o
 
 The app collects no personal data and sends nothing over the network. All files stay on your computer. A name is written into a file only when you type it (as the author of a change, a run or a release); the app looks up no user name and no computer name.
 
+The editor's settings file on your computer keeps a list of your recent projects (each project's name and folder) for the Home page; **Clear list** on Home removes them. It does not keep which project was open last.
+
 ## For developers
 
 Harness Design Studio does not copy or import WireViz code: never copy code from `../src/wireviz` (GPL-3.0) and never import it. Start with [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`docs/developer/`](docs/developer/README.md) and [`CLAUDE.md`](CLAUDE.md); release procedure: [`docs/RELEASE.md`](docs/RELEASE.md).

@@ -106,7 +106,7 @@ and then kept running until it was stopped after 15 seconds. To check a source i
 
 ### The window is blank, tiny, or closes at once
 
-Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **Settings > Appearance > Interface size** (or **View > Interface size**). The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini` on Ubuntu (**Settings > About** names the file on every system); delete it to reset the scale, theme and last project (it holds no design data).
+Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **Settings > Appearance > Interface size** (or **View > Interface size**). The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini` on Ubuntu (**Settings > About** names the file on every system); delete it to reset the scale, theme, layout and the list of recent projects (it holds no device, interface or part data; the program does not remember which project was open and starts on Home).
 
 ### The app shows problems everywhere, or no problems at all
 
@@ -794,7 +794,7 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 | Your design | the project folder you named |
 | Build workbooks, wire lists, BOM, exports (and the drawings, with `--drawings`) | `<project>/outputs/` (made by `harness-design-studio export`; can be deleted and made again) |
 | Autosave of the app | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
-| App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
+| App settings (theme, scale, window layout, the recent projects (each one's name and folder; **Clear list** on Home empties the list)) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no device, interface or part data) |
 | Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, can be deleted when the project is closed) |
 | Copies of the import templates | the folder you gave to `harness-design-studio templates` |
 
