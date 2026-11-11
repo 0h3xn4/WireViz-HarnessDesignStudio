@@ -6,6 +6,7 @@ The network and `apt-get` are replaced here; the release workflow runs the real 
 """
 
 import hashlib
+import io
 from pathlib import Path
 
 import pytest
@@ -228,3 +229,64 @@ def test_the_file_names_of_a_version_with_an_epoch_carry_no_epoch(
     assert (
         asked[0] == f"{fs.LAUNCHPAD_FILES}/zlib/1:1.3.dfsg-3.1ubuntu2/zlib_1.3.dfsg-3.1ubuntu2.dsc"
     )
+
+
+class _Response:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self.data
+
+
+def test_a_download_is_tried_again_after_a_network_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """1.17.1rc2: the release run lost the network to Launchpad for a moment."""
+    import urllib.error
+
+    calls: list[str] = []
+    waits: list[float] = []
+
+    def fake_urlopen(url: str, timeout: float) -> _Response:
+        calls.append(url)
+        if len(calls) < 3:
+            raise urllib.error.URLError(OSError(101, "Network is unreachable"))
+        return _Response(b"ok")
+
+    monkeypatch.setattr("tools.fetch_sources.urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("tools.fetch_sources.time.sleep", waits.append)
+    assert fs._get("https://example.org/x") == b"ok"
+    assert len(calls) == 3 and waits == list(fs.RETRY_WAITS[:2])
+
+
+def test_a_download_gives_up_after_the_last_try_and_never_retries_a_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import urllib.error
+
+    waits: list[float] = []
+    monkeypatch.setattr("tools.fetch_sources.time.sleep", waits.append)
+
+    def unreachable(url: str, timeout: float) -> _Response:
+        raise urllib.error.URLError(OSError(101, "Network is unreachable"))
+
+    monkeypatch.setattr("tools.fetch_sources.urllib.request.urlopen", unreachable)
+    with pytest.raises(urllib.error.URLError):
+        fs._get("https://example.org/x")
+    assert waits == list(fs.RETRY_WAITS)
+
+    waits.clear()
+
+    def not_found(url: str, timeout: float) -> _Response:
+        raise urllib.error.HTTPError(url, 404, "Not Found", hdrs=None, fp=io.BytesIO())  # type: ignore[arg-type]
+
+    monkeypatch.setattr("tools.fetch_sources.urllib.request.urlopen", not_found)
+    with pytest.raises(urllib.error.HTTPError) as raised:
+        fs._get("https://example.org/x")
+    raised.value.close()
+    assert waits == []
