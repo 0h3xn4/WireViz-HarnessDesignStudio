@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.1rc2 model df4e0dc87881
-# harness-design-studio 1.17.1rc2. Provided as is, without warranty. Verify before use.
+# harness-design-studio 1.17.1 model 0d5c2d79eaf5
+# harness-design-studio 1.17.1. Provided as is, without warranty. Verify before use.
 Label,Kind,Text,Quantity
 W012-P1,connector,W012-P1 mates PCDU1-J09,1
 W012-P2,connector,W012-P2 open end,1

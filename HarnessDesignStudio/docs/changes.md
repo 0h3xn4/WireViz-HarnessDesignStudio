@@ -25,6 +25,13 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-11: version 1.17.1, a shorter version string (the stored hashes are written again; nothing else changes)
+
+- **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with `1.17.1rc2` (`BASE_VERSION` 1.17.1rc2).
+- **Now.** The full release `1.17.1` has six characters, `1.17.1rc2` nine. The comparison cannot replace a stamp of another length (a PDF stores byte offsets), so the three files were written again with `1.17.1`, and `BASE_VERSION` is `1.17.1`.
+- **Why.** 1.17.1 is the full release of what 1.17.1rc2 tested (D-225).
+- **What moved.** Only the version stamp and the hashes that include it (the model hash, and the SHA-256 of each written file). The diff of the three files holds no other change: no number, no finding, no text.
+
 ### 2026-11-11: version 1.17.1rc2 (the stored hashes are written again with the new stamp; nothing else changes)
 
 - **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with `1.17.1rc1` (`BASE_VERSION` 1.17.1rc1).
