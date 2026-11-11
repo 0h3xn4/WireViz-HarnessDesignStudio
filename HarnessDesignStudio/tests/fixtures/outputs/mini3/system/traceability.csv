@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.1rc2 model c0d5c1c6f7c3
-# harness-design-studio 1.17.1rc2. Provided as is, without warranty. Verify before use.
+# harness-design-studio 1.17.1 model 685abea7f9b9
+# harness-design-studio 1.17.1. Provided as is, without warranty. Verify before use.
 Interface,Name,Type,From,To,Harnesses,Wires,Routed
 IF-PWR-RW1,RW1 power,power_primary,PCDU/PCDU-J01,RW1/RW1-J01,W001,W001-001;W001-002,yes
 IF-TM-RW1,RW1 command and telemetry,rs422,OBC/OBC-J01,RW1/RW1-J02,W002,W002-001;W002-002;W002-003;W002-004,yes
