@@ -61,7 +61,7 @@ Owner to confirm: the repository records workshop and AIT-engineer feedback (D-1
 
 ## PRIVACY_APP
 
-> The app collects no personal data and sends nothing over the network. All files stay on your computer.
+> The app collects no personal data and sends nothing over the network. All files stay on your computer. A name is written into a file only when you type it (as the author of a change, a run or a release); the app looks up no user name and no computer name.
 
 ## OUTPUT_NOTICE
 

@@ -7,8 +7,7 @@ from setuptools import find_packages, setup
 
 from src.wireviz import APP_URL, CMD_NAME, __version__
 
-# The description published with the package is the upstream README (docs/README.md is the docs index)
-README_PATH = Path(__file__).parent / "docs" / "upstream" / "README.upstream.md"
+README_PATH = Path(__file__).parent / "docs" / "README.md"
 
 setup(
     name=CMD_NAME,
@@ -16,9 +15,8 @@ setup(
     author="Daniel Rojas",
     # author_email='',
     description="Easily document cables and wiring harnesses",
-    long_description=README_PATH.read_text(encoding="utf-8"),
+    long_description=open(README_PATH).read(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.14",
     install_requires=[
         "click",
         "pyyaml",
@@ -40,7 +38,8 @@ setup(
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],

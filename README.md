@@ -80,7 +80,7 @@ harness-design-studio export wheel-link
 
 ## Where to go next
 
-Every guide is listed, with one line each, in the [documentation index](docs/README.md).
+Every guide is listed, with one line each, in the [documentation index](docs/INDEX.md).
 
 | You want to | Go to |
 | --- | --- |
@@ -132,16 +132,16 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 - **Licence.** Harness Design Studio is licensed under the GNU General Public Licence, version 3 only (GPL-3.0-only). The full text is in the file LICENSE. The [`LICENSE`](LICENSE) file at the top of this repository is the GPL-3.0 licence file that came with WireViz; it covers the WireViz files. The same GPL-3.0 text is in [`HarnessDesignStudio/LICENSE`](HarnessDesignStudio/LICENSE). [`HarnessDesignStudio/NOTICE`](HarnessDesignStudio/NOTICE) says who made what and how the two parts relate. Third-party components and their licences: [`HarnessDesignStudio/THIRD_PARTY_NOTICES.txt`](HarnessDesignStudio/THIRD_PARTY_NOTICES.txt).
 - **WireViz.** Harness Design Studio does not copy or import WireViz code.
 - **Names.** Harness Design Studio is a personal project. It is not affiliated with or endorsed by the WireViz project, Anthropic or any other company or project named here. All product names and trademarks belong to their owners and are used only to describe compatibility or facts.
-- **Privacy.** The app collects no personal data and sends nothing over the network. All files stay on your computer.
+- **Privacy.** The app collects no personal data and sends nothing over the network. All files stay on your computer. A name is written into a file only when you type it (as the author of a change, a run or a release); the app looks up no user name and no computer name.
 
 ## What this repository adds to WireViz
 
 | | WireViz (upstream) | This repository |
 | --- | --- | --- |
-| Program | The `wireviz` Python package in `src/wireviz`, with its `docs/`, `examples/` and `tutorial/` | Taken from WireViz 0.4.1 (commit `e4fe099`). Some files were changed after the fork: formatting and Python 3.14 updates in `src/wireviz` (commit `a4431e2a`), `setup.py`, `.gitignore`, `MANIFEST.in` and `docs/README.md`. `examples/` and `tutorial/` are as upstream. See [`HarnessDesignStudio/NOTICE`](HarnessDesignStudio/NOTICE). |
+| Program | The `wireviz` Python package in `src/wireviz`, with its `docs/`, `examples/` and `tutorial/` | Taken from WireViz 0.4.1 (commit `e4fe099`) and unchanged: every upstream file is byte for byte as at that commit. Some had been changed after the fork; the owner had them restored on 2026-11-10 (decision D-220). See [`HarnessDesignStudio/NOTICE`](HarnessDesignStudio/NOTICE). |
 | Second tool | — | **Harness Design Studio** in [`HarnessDesignStudio/`](HarnessDesignStudio/README.md): a separate codebase. Harness Design Studio does not copy or import WireViz code (decision D-01). |
-| Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`HarnessDesignStudio/docs/`](HarnessDesignStudio/docs/README.md) and `HarnessDesignStudio/compliance/`. [`docs/README.md`](docs/README.md) is the index of both. |
-| README | `docs/README.md` | This file, with the original WireViz README embedded below (its text is the upstream text, with headings one level lower and some links changed); a copy is at [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md). |
+| Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`HarnessDesignStudio/docs/`](HarnessDesignStudio/docs/README.md) and `HarnessDesignStudio/compliance/`. [`docs/INDEX.md`](docs/INDEX.md) is the index of both. |
+| README | [`docs/README.md`](docs/README.md) (unchanged) | This file, with the original WireViz README embedded below (its text is the upstream text, with headings one level lower and some links changed); an identical copy of the upstream file is at [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md). |
 | Continuous integration | WireViz's own workflows | The same, plus workflows for the tool: [`harness-ci.yml`](.github/workflows/harness-ci.yml) (tests and the Ubuntu packages), [`harness-platforms.yml`](.github/workflows/harness-platforms.yml) (the tests on Windows), [`harness-packages.yml`](.github/workflows/harness-packages.yml) (the Windows packages, branches `pkg/**`) and [`release.yml`](.github/workflows/release.yml) (publishes a release when a tag is pushed). |
 | Install | `pip install wireviz` (needs GraphViz) | Separate: see the [quick start](#quick-start). The two do not need each other. |
 
@@ -167,13 +167,13 @@ The pre-release audit ([`AUDIT.md`](AUDIT.md), area H) read the WireViz code in 
 - **`parse()` keeps state between calls (H-8).** `image_paths` is a mutable default that fills up, a dict given as input is changed (a second parse of it fails), and a `Path` or `str` for `image_paths` is rejected. Pass a fresh list of `Path` objects and a fresh dict each time.
 - **Cable wire numbers are not checked (H-9).** Wire `0` silently takes the colour of the last wire, a wire number above the wire count fails late with an `IndexError` that names no cable, `s` on a cable without a shield is accepted, and the same wire may be used twice. Check the numbers yourself.
 
-Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, `--prepend` losing sections that share a name, templates searched next to the output, the AWG/mm2 table, a non-UTF-8 locale, and others) are listed in [`AUDIT.md`](AUDIT.md). Packaging of this fork (H-18) was fixed: `setup.py` now reads `docs/upstream/README.upstream.md` as UTF-8 and requires Python 3.14 or newer; the distribution name `wireviz` and the version `0.4.1` are unchanged.
+Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, `--prepend` losing sections that share a name, templates searched next to the output, the AWG/mm2 table, a non-UTF-8 locale, and others) are listed in [`AUDIT.md`](AUDIT.md). The packaging finding H-18 (`setup.py` reads its description without naming an encoding, so it fails under a non-UTF-8 locale) is upstream's again: a fix made in this fork was undone when the upstream files were restored (D-220).
 
 ---
 
 # Original WireViz README
 
-The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). Its text is the upstream text, except for the Python and Ubuntu versions it names, which were updated. Its headings are one level lower and its relative links point to the right place in this repository. The known problems of that code, which this repository does not change, are listed under [Known problems](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository). An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](HarnessDesignStudio/docs/developer/upstream-sync.md).
+The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). Its text is the upstream text. Its headings are one level lower and its relative links point to the right place in this repository. The known problems of that code, which this repository does not change, are listed under [Known problems](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository). An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](HarnessDesignStudio/docs/developer/upstream-sync.md).
 
 <!-- BEGIN UPSTREAM README -->
 
@@ -274,11 +274,11 @@ See the [tutorial page](tutorial/readme.md) for sample code, as well as the [exa
 
 ##### Requirements
 
-WireViz requires Python 3.14 or later.
+WireViz requires Python 3.7 or later.
 
 WireWiz requires GraphViz to be installed in order to work. See the [GraphViz download page](https://graphviz.org/download/) for OS-specific instructions.
 
-_Note_: Ubuntu 24.04 LTS users in particular need to separately install Python 3.14 or above, as that comes with Python 3.12 as the included system Python install (for example with `uv python install 3.14`).
+_Note_: Ubuntu 18.04 LTS users in particular may need to separately install Python 3.7 or above, as that comes with Python 3.6 as the included system Python install.
 
 ##### Installing the latest release
 

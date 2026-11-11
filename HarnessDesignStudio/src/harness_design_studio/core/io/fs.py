@@ -6,8 +6,8 @@ import errno
 import hashlib
 import json
 import os
-import platform
 import re
+import secrets
 import shutil
 import sys
 import tempfile
@@ -25,6 +25,15 @@ else:
     import fcntl
 
 LOCK_NAME = ".harness.lock"
+# The lock file names the installation that holds it by a random id, never by the computer's
+# name (decision D-222). The id is made once and kept in the user's settings folder.
+ID_FILE = "install-id"
+_ID_FORM = re.compile(r"^[0-9a-f]{32}$")
+_ids: dict[str, str] = {}  # settings folder -> id (also when it could not be stored there)
+_PROCESS_ID = secrets.token_hex(16)  # used when no settings folder can be found: this process only
+# Older versions wrote the computer's name under "host" and read it back. A file of this version
+# says this instead: an older version sees "another computer" and leaves the lock alone.
+HOST_NOT_RECORDED = "not recorded"
 # Windows opens files in text mode unless told otherwise; elsewhere the flags do not exist
 _BINARY = getattr(os, "O_BINARY", 0)
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
@@ -193,6 +202,56 @@ def _fsync_dir(directory: Path) -> None:
         os.close(fd)
 
 
+def install_id() -> str:
+    """The random id (32 hex digits) that stands for this installation in project lock files:
+    made once with `secrets` and kept in the file `install-id` of the user's settings folder. It
+    says nothing about the person or the computer. When the settings folder cannot be found (no
+    home folder known, as for a program started with an empty environment) or cannot be written,
+    a random id for this process alone is used and not saved: a lock this process leaves behind
+    after a crash then reads as one of another computer, with the usual way out (delete the lock
+    file). Taking a lock never fails for want of a settings folder."""
+    from harness_design_studio.core.extensions.trust import settings_dir
+
+    try:
+        folder = settings_dir()
+    except RuntimeError, OSError, KeyError, ValueError:
+        return _PROCESS_ID
+    if (known := _ids.get(str(folder))) is not None:
+        return known
+    path = folder / ID_FILE
+    value = _read_id(path)
+    if value is None:
+        value = secrets.token_hex(16)
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_name(f"{ID_FILE}.{os.getpid()}.{secrets.token_hex(4)}.tmp")
+            try:
+                tmp.write_text(value + "\n", encoding="ascii")
+                try:
+                    os.link(tmp, path)  # fails if another process made its id first
+                except FileExistsError:
+                    if (existing := _read_id(path)) is None:
+                        os.replace(tmp, path)  # a damaged file is replaced
+                    else:
+                        value = existing
+                except OSError:
+                    os.replace(tmp, path)  # a file system without hard links
+            finally:
+                tmp.unlink(missing_ok=True)
+        except OSError, ValueError:
+            value = _PROCESS_ID  # not stored: this process keeps an id of its own
+    _ids[str(folder)] = value
+    return value
+
+
+def _read_id(path: Path) -> str | None:
+    try:
+        text = path.read_text(encoding="ascii").strip()
+    except OSError, ValueError:
+        return None
+    return text if _ID_FORM.match(text) else None
+
+
 def _boot_id() -> str | None:
     """Identifies this start of the operating system (Linux only; None elsewhere)."""
     try:
@@ -269,7 +328,9 @@ def _lock_guard(fd: int) -> None:
 
 
 class ProjectLock:
-    """Detects the same project open twice. The lock file holds only pid, host and start time."""
+    """Detects the same project open twice. The lock file holds only the process number, a random
+    id of the installation (`install_id`), the start time and, on Linux, the boot id and the
+    process start time: no user name and no computer name (D-222)."""
 
     def __init__(self, root: Path) -> None:
         self.path = long_path(root) / LOCK_NAME
@@ -281,7 +342,8 @@ class ProjectLock:
         other process can delete our fresh lock between our check and our create."""
         info: dict[str, object] = {
             "pid": os.getpid(),
-            "host": platform.node(),
+            "install": install_id(),
+            "host": HOST_NOT_RECORDED,  # for older versions, which read this key
             "since": int(time.time()),
         }
         if (boot := _boot_id()) is not None:
@@ -401,17 +463,20 @@ class ProjectLock:
         the project counts as open. Nothing is guessed: what cannot be checked counts as held."""
         try:
             info = json.loads(self.path.read_text(encoding="utf-8"))
-            pid, host = int(info["pid"]), str(info["host"])
+            pid = int(info["pid"])
         except OSError, ValueError, KeyError, TypeError:
             return None  # unreadable lock: treat as stale
-        boot, start = info.get("boot"), info.get("start")
+        boot, start, install = info.get("boot"), info.get("start"), info.get("install")
         ours = _boot_id()
         same_boot = isinstance(boot, str) and ours is not None and boot == ours
-        if host != platform.node() and not same_boot:
+        # A lock without our id (another computer, another user account, or a version before
+        # D-222, which wrote the computer's name instead) cannot be checked from here
+        if install != install_id() and not same_boot:
             return (
-                f"This project is already open on another computer ('{host}'), or that computer "
-                "left it locked. That cannot be checked from here. If you are sure nobody has it "
-                f"open, delete the lock file '{self.path}' and try again."
+                "This project is already open on another computer or in another user account, or "
+                "one of them (or an older version of the tool) left it locked. That cannot be "
+                "checked from here. If you are sure nobody has it open, delete the lock file "
+                f"'{self.path}' and try again."
             )
         if isinstance(boot, str) and ours is not None and boot != ours:
             return None  # written before the last restart of this computer

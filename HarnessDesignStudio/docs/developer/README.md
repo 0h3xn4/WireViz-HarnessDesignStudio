@@ -35,6 +35,6 @@ This page is the map of the documents for people who work on the code or the doc
 | [`../RELEASE.md`](../RELEASE.md) | The release checklist, step by step |
 | [`../FILE_FORMAT.md`](../FILE_FORMAT.md) | The project folder format |
 | [`../../compliance/docs/PROBLEM_REPORTING.md`](../../compliance/docs/PROBLEM_REPORTING.md) | How problems are reported and tracked |
-| [`../../../docs/README.md`](../../../docs/README.md) | The index of all documents |
+| [`../../../docs/INDEX.md`](../../../docs/INDEX.md) | The index of all documents |
 
 Next: [`setup-and-tests.md`](setup-and-tests.md).

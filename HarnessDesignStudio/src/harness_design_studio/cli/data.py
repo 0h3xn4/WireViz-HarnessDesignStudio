@@ -88,7 +88,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         default=None,
         help="on: a release needs an author, a checker and a person who releases that are three "
         "different people, a date that is not earlier than the project's change log and not "
-        "more than a day ahead, and takes a missing name from Git (sets "
+        "more than a day ahead; every name is typed (sets "
         "naming.release_distinct_roles); off: the setting is taken out again (the default)",
     )
     c.add_argument(

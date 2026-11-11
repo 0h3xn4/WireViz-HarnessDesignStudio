@@ -20,7 +20,7 @@ Project: ____________  Harness: ______  Revision: ___  Reviewer: ____________  D
 - [ ] Parts: every used part is approved in your parts list.
 
 ## If you use the ECSS profiles (`harness-design-studio config DIR --apply-profile ...`)
-These points cannot be checked by the tool. The requirement IDs are in `compliance/requirements` of the tool's repository.
+These points cannot be checked by the tool. The clause numbers below are those of the standards; read the requirements in the standards themselves.
 - [ ] Connector savers are used during equipment tests; mating cycles of every connector are counted and stay within the limit (ECSS-Q-ST-30-11C 6.11.3 b and e, 6.12.3 a and c).
 - [ ] The contact assignments of connectors close to each other cannot cause damage if a wrong connector is mated (6.11.3 c).
 - [ ] RF power keeps a 6 dB margin before multipactor (6.12.3 b), by analysis.

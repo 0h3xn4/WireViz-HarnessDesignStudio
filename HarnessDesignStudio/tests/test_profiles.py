@@ -17,12 +17,13 @@ from harness_design_studio.core.samples import mini3
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def test_every_setting_cites_a_real_requirement() -> None:
-    known: set[str] = set()
-    for f in (ROOT / "compliance" / "requirements").glob("*.csv"):
-        if f.name != "overrides.csv":
-            with f.open(newline="", encoding="utf-8") as fh:
-                known |= {r["ID"] for r in csv.DictReader(fh)}
+def test_every_setting_cites_an_assessed_requirement() -> None:
+    """Every value of a profile cites a requirement that the design assessment has a row for
+    (the requirement lists hold ESA's text and are not in the repository, D-221)."""
+    path = ROOT / "compliance" / "assessment" / "design_assessment.csv"
+    with path.open(newline="", encoding="utf-8") as fh:
+        known = {r["ID"] for r in csv.DictReader(fh)}
+    assert known
     for settings in standard_profiles.PROFILES.values():
         for s in settings:
             assert s.source in known, s

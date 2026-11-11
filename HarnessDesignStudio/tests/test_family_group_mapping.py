@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""REQ-STD-06: the family-group mapping worksheet cites only requirements that exist and covers
+"""REQ-STD-06: the family-group mapping worksheet cites only requirements that are assessed and covers
 every part class of the library (ECSS-Q-ST-30-11C 6.11, 6.12, 6.32; action A-16)."""
 
 from __future__ import annotations
@@ -18,11 +18,13 @@ def _rows() -> list[dict[str, str]]:
         return list(csv.DictReader(f))
 
 
-def test_cited_requirements_exist() -> None:
-    with (ROOT / "compliance" / "requirements" / "ECSS-Q-ST-30-11C.csv").open(
+def test_cited_requirements_are_assessed() -> None:
+    """Only requirements of ECSS-Q-ST-30-11C that the design assessment has a row for (the
+    requirement lists hold ESA's text and are not in the repository, D-221)."""
+    with (ROOT / "compliance" / "assessment" / "design_assessment.csv").open(
         newline="", encoding="utf-8"
     ) as f:
-        known = {r["ID"] for r in csv.DictReader(f)}
+        known = {r["ID"] for r in csv.DictReader(f) if r["ID"].startswith("ECSS-Q-ST-30-11_")}
     cited = {i for r in _rows() for i in r["requirements"].split()}
     assert cited and cited <= known, cited - known
 

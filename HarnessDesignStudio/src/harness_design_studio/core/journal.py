@@ -22,7 +22,6 @@ gives the same bytes. The clock and the author are read in `now()` and `author()
 replace.
 """
 
-import contextlib
 import hashlib
 import json
 import os
@@ -103,11 +102,11 @@ def resolve_author(
     explicit: str | None = None,
     *,
     environ: Mapping[str, str] | None = None,
-    folder: Path | None = None,
 ) -> str:
-    """Who is working: the name given (`--author`), else the environment variable HARNESS_AUTHOR,
-    else the `user.name` Git has for `folder` (the user's own files when None), else the user of the
-    computer (`USER`, `USERNAME` or `LOGNAME`), else `unknown`. Never an empty text. This is the one
+    """Who is working: the name given (`--author`), else the environment variable HARNESS_AUTHOR
+    (a name the person sets), else `unknown`. Never an empty text. Nothing is looked up: not the
+    user name of the operating system, not the `user.name` of Git, not the computer's name
+    (decision D-222: a file holds a person's name only when the person gave it). This is the one
     place the operator is resolved: the journal (`author`) and the run record
     (`run_record.resolve_operator`) both call it."""
     env = os.environ if environ is None else environ
@@ -115,23 +114,13 @@ def resolve_author(
         named = _clean_name(candidate)
         if named:
             return named
-    from .vcs.gitname import configured_name
-
-    with contextlib.suppress(Exception):
-        named = _clean_name(configured_name(folder))
-        if named:
-            return named
-    for var in ("USER", "USERNAME", "LOGNAME"):
-        named = _clean_name(env.get(var))
-        if named:
-            return named
     return UNKNOWN_AUTHOR
 
 
 def author() -> str:
-    """Who is making this change: `--author`, else HARNESS_AUTHOR, else the name Git has for the
-    folder the tool runs in, else the user of the computer, else `unknown` (`resolve_author`)."""
-    return resolve_author(_AUTHOR, folder=Path.cwd())
+    """Who is making this change: `--author`, else HARNESS_AUTHOR, else `unknown`
+    (`resolve_author`)."""
+    return resolve_author(_AUTHOR)
 
 
 # ---- adding entries ---------------------------------------------------------------------------

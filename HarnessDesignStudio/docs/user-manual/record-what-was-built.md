@@ -133,7 +133,7 @@ The AIT engineer role ([choose your role](choose-your-role.md)) lists the area *
 
 ## Who recorded it, and when
 
-The records hold no time and no user name. If the project keeps a change journal (`journal DIR`), each record that is added or changed is an entry of kind `asbuilt` with the author (`--author`, `HARNESS_AUTHOR`, the name Git has, the user of the computer), the time (UTC) and the old and new values; more than 25 records created in one save are one entry. A non-conformance or a note you write in a sheet is part of the record. To say that a deviation of the **design** was accepted, use the tool's own mechanism ([override and keep a history](override-and-keep-a-history.md)); an as-built value that is out of its limit is not a finding of a design rule.
+The records hold no time and no user name. If the project keeps a change journal (`journal DIR`), each record that is added or changed is an entry of kind `asbuilt` with the author (`--author` or `HARNESS_AUTHOR`, else `unknown`: no name is looked up), the time (UTC) and the old and new values; more than 25 records created in one save are one entry. A non-conformance or a note you write in a sheet is part of the record. To say that a deviation of the **design** was accepted, use the tool's own mechanism ([override and keep a history](override-and-keep-a-history.md)); an as-built value that is out of its limit is not a finding of a design rule.
 
 ## Common mistakes
 
