@@ -9,7 +9,8 @@ fetches
 
 - the Qt for Python source (`pyside-setup-everywhere-src-<version>.tar.xz`) and the Qt modules that
   the package carries (qtbase, qtsvg, qtwayland), each of the version of the Qt libraries in the
-  package, from download.qt.io, and checks each against the `md5sums.txt` that Qt publishes beside it;
+  package, from download.qt.io, and checks each against the SHA-256 sum that download.qt.io publishes
+  for it (`<file>.sha256`; Qt for Python has no `md5sums.txt` beside its source);
 - the Debian source package (`.dsc`, `.orig.tar.*`, `.debian.tar.*`) of every library of the
   operating system that the package carries, in the version in the inventory, with `apt-get source`
   (the machine needs `deb-src` lines; the release workflow adds them).
@@ -35,20 +36,20 @@ QT_MODULES = ("qtbase", "qtsvg", "qtwayland")
 
 
 def qt_downloads(version: str) -> list[tuple[str, str, str]]:
-    """(file name, URL, URL of the md5sums.txt beside it) for the Qt sources of `version`."""
+    """(file name, URL, URL of its published SHA-256 sum) for the Qt sources of `version`."""
     major_minor = ".".join(version.split(".")[:2])
     sub = f"{QT_BASE}/qt/{major_minor}/{version}/submodules"
     out = [
         (
             f"{m}-everywhere-src-{version}.tar.xz",
             f"{sub}/{m}-everywhere-src-{version}.tar.xz",
-            f"{sub}/md5sums.txt",
+            f"{sub}/{m}-everywhere-src-{version}.tar.xz.sha256",
         )
         for m in QT_MODULES
     ]
     pyside = f"{QT_BASE}/QtForPython/pyside6/PySide6-{version}-src"
     name = f"pyside-setup-everywhere-src-{version}.tar.xz"
-    out.append((name, f"{pyside}/{name}", f"{pyside}/md5sums.txt"))
+    out.append((name, f"{pyside}/{name}", f"{pyside}/{name}.sha256"))
     return out
 
 
@@ -84,9 +85,19 @@ def fetch_qt(version: str, out: Path) -> list[Path]:
     for name, url, sums_url in qt_downloads(version):
         data = _get(url)
         sums = _get(sums_url).decode("utf-8", "replace")
-        want = next((ln.split()[0] for ln in sums.splitlines() if ln.strip().endswith(name)), None)
-        if want is None or hashlib.md5(data).hexdigest() != want:  # noqa: S324 - the check Qt publishes
-            raise SystemExit(f"{name}: does not match the md5sums.txt that Qt publishes beside it")
+        # "<sha256>  <file name>", as download.qt.io serves it for each file
+        want = next(
+            (
+                ln.split()[0].lower()
+                for ln in sums.splitlines()
+                if len(ln.split()) == 2 and ln.split()[1].lstrip("*") == name
+            ),
+            None,
+        )
+        if want is None or hashlib.sha256(data).hexdigest() != want:
+            raise SystemExit(
+                f"{name}: does not match the SHA-256 sum that download.qt.io publishes"
+            )
         (out / name).write_bytes(data)
         got.append(out / name)
     return got
