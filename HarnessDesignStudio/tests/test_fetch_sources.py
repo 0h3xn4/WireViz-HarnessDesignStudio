@@ -66,8 +66,8 @@ def test_a_qt_file_that_does_not_match_the_published_sum_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     def fake_get(url: str) -> bytes:
-        if url.endswith("md5sums.txt"):
-            return b"0123456789abcdef0123456789abcdef  qtbase-everywhere-src-6.11.2.tar.xz\n"
+        if url.endswith(".sha256"):
+            return f"{'0' * 64}  {url.rsplit('/', 1)[1].removesuffix('.sha256')}\n".encode()
         return b"not the archive"
 
     monkeypatch.setattr(fs, "_get", fake_get)
@@ -79,11 +79,11 @@ def test_a_matching_file_is_written_and_listed_with_its_sha256(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     data = b"archive bytes"
-    md5 = hashlib.md5(data).hexdigest()  # noqa: S324 - the sum Qt publishes
+    sha = hashlib.sha256(data).hexdigest()
 
     def fake_get(url: str) -> bytes:
-        if url.endswith("md5sums.txt"):
-            return "".join(f"{md5}  {n}\n" for n, _u, _s in fs.qt_downloads("6.11.2")).encode()
+        if url.endswith(".sha256"):
+            return f"{sha}  {url.rsplit('/', 1)[1].removesuffix('.sha256')}\n".encode()
         return data
 
     monkeypatch.setattr(fs, "_get", fake_get)
@@ -96,3 +96,25 @@ def test_a_matching_file_is_written_and_listed_with_its_sha256(
 def test_only_https_is_used() -> None:
     with pytest.raises(SystemExit, match="https"):
         fs._get("http://example.org/x")
+
+
+def test_each_qt_file_is_checked_against_its_own_published_sha256() -> None:
+    """1.17.1rc1: Qt for Python publishes no md5sums.txt beside its source (the release run got a
+    404), but download.qt.io serves `<file>.sha256` for every file."""
+    for name, url, sums_url in fs.qt_downloads("6.11.2"):
+        assert sums_url == f"{url}.sha256" and url.endswith(f"/{name}")
+
+
+def test_a_sum_for_another_file_is_not_taken(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data = b"archive bytes"
+
+    def fake_get(url: str) -> bytes:
+        if url.endswith(".sha256"):
+            return f"{hashlib.sha256(data).hexdigest()}  some-other-file.tar.xz\n".encode()
+        return data
+
+    monkeypatch.setattr(fs, "_get", fake_get)
+    with pytest.raises(SystemExit, match="does not match"):
+        fs.fetch_qt("6.11.2", tmp_path)
