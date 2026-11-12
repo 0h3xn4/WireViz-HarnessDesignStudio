@@ -113,13 +113,19 @@ def add_journal_union(folder: Path) -> str:
             return "written"
         data = path.read_bytes()
         text = data.decode("utf-8")
-        if text == GITATTRIBUTES_1:
-            atomic_write_bytes(path, GITATTRIBUTES.encode("utf-8"), backup=False, root=folder)
+        # A Windows checkout (Git's core.autocrlf) has the file with CRLF line ends: compare and
+        # add in the line ends the file has, so that the 1.x text is still recognised.
+        crlf = "\r\n" in text
+        if text.replace("\r\n", "\n") == GITATTRIBUTES_1:
+            new = GITATTRIBUTES.replace("\n", "\r\n") if crlf else GITATTRIBUTES
+            atomic_write_bytes(path, new.encode("utf-8"), backup=False, root=folder)
             return "updated"
         if any(line.split()[:1] == [JOURNAL_FILE] for line in text.splitlines()):
             return "present"
         joint = "" if not text or text.endswith("\n") else "\n"
         more = f"{joint}#\n# Added by Harness Design Studio.\n{JOURNAL_UNION}"
+        if crlf:
+            more = more.replace("\n", "\r\n")
         atomic_write_bytes(path, data + more.encode("utf-8"), backup=False, root=folder)
         return "added"
     except OSError, ValueError, SaveError:

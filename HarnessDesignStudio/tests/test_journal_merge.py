@@ -423,6 +423,21 @@ def test_the_gitattributes_get_the_journal_line_once(tmp_path):
     assert add_journal_union(tmp_path) == "present"
 
 
+def test_a_windows_checkout_of_the_1x_gitattributes_is_still_recognised(tmp_path):
+    """Git on Windows checks the file out with CRLF line ends (core.autocrlf): the 1.x text is
+    still replaced, and lines added to a CRLF file keep its line ends."""
+    path = tmp_path / ".gitattributes"
+    path.write_bytes(GITATTRIBUTES_1.replace("\n", "\r\n").encode("utf-8"))
+    assert add_journal_union(tmp_path) == "updated"
+    assert path.read_bytes() == GITATTRIBUTES.replace("\n", "\r\n").encode("utf-8")
+    assert add_journal_union(tmp_path) == "present"
+    path.write_bytes(b"*.png binary\r\n")
+    assert add_journal_union(tmp_path) == "added"
+    data = path.read_bytes()
+    assert data.startswith(b"*.png binary\r\n#\r\n") and b"journal.jsonl merge=union\r\n" in data
+    assert b"\n" not in data.replace(b"\r\n", b"")
+
+
 def test_a_linked_gitattributes_is_left_alone(tmp_path):
     (tmp_path / "elsewhere").write_text("x", encoding="utf-8")
     (tmp_path / ".gitattributes").symlink_to(tmp_path / "elsewhere")
