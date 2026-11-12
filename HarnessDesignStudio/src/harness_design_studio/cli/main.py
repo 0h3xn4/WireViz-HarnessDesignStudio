@@ -41,6 +41,10 @@ from harness_design_studio.core.validation import validate_folder
 
 PROG = "harness-design-studio"  # `harness` is kept as a short alias of the same command
 MIGRATED = "Migrated; the original files are kept in a .migration-backup-* folder."
+GITATTRIBUTES_JOURNAL = (
+    "The journal is now journal.jsonl (one entry per line); .gitattributes says "
+    "`journal.jsonl merge=union`, so Git keeps both sides' entries of a merge. Commit both files."
+)
 MIGRATED_CHECKED = (
     "Checked after the write: same model hash, same findings, baselines untouched, "
     "identical export."
@@ -177,6 +181,8 @@ def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
     if done is not None:
         rep.say(f"Format {done.from_version} to {done.to_version}. Record: {done.record}.")
         rep.say(MIGRATED_CHECKED)
+        if done.gitattributes in ("written", "updated", "added"):
+            rep.say(GITATTRIBUTES_JOURNAL)
     rep.put(
         migrated=done is not None,
         from_version=done.from_version if done else None,
@@ -184,6 +190,7 @@ def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
         backup=done.backup if done else None,
         record=done.record if done else None,
         self_check=done.self_check if done else None,
+        gitattributes=done.gitattributes if done else None,
     )
     return rep.finish(0)
 

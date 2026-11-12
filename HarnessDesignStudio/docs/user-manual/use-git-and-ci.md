@@ -32,7 +32,7 @@ git commit -m "Start from first-steps"
 
 The tool wrote a `.gitignore` inside the project (`design/.gitignore`). It ignores backup files (`*.bak`), lock files, temporary files and the recovery folders. It does not ignore `outputs/`. Decide for yourself whether the exports belong in the repository; the folder can always be made again. To leave them out, add `outputs/` to your own `.gitignore`.
 
-`harness-design-studio new` also wrote a `.gitattributes` (`design/.gitattributes`, since version 1.9). It has one effect: Git treats `generated/generation.json` as a binary file, so a merge in which two people both pressed Generate stops on that file without writing conflict markers into it ([why and what to do](#when-generatedgenerationjson-conflicts)). Every other file stays text and merges line by line. A project made before 1.9 does not have the file: copy `ci/gitattributes` from the templates (`harness-design-studio templates my-templates`) to `design/.gitattributes`.
+`harness-design-studio new` also wrote a `.gitattributes` (`design/.gitattributes`, since version 1.9). It has two effects. Git treats `generated/generation.json` as a binary file, so a merge in which two people both pressed Generate stops on that file without writing conflict markers into it ([why and what to do](#when-generatedgenerationjson-conflicts)). And Git merges the change journal, `journal.jsonl`, with `merge=union`: it keeps the lines that both sides added, so the journal does not conflict ([the journal after a merge](#the-change-journal-after-a-merge)). Every other file stays text and merges line by line. A project that gets its journal file later (`journal --start`, or the upgrade from format 1) gets the journal's line added to its `.gitattributes`. A project made before 1.9 does not have the file: copy `ci/gitattributes` from the templates (`harness-design-studio templates my-templates`) to `design/.gitattributes`.
 
 Work as usual, then commit. Generate once and commit the result:
 
@@ -121,6 +121,20 @@ git commit
 Another way is to keep `generated/` out of Git (a line `generated/` in the `.gitignore` of the repository) and to run `generate` after every checkout. Then the record can never conflict, but it also holds the reasons that the Why tab shows and the number of the next harness, so each checkout starts those from what `generate` finds.
 
 By design, a few other files can conflict when two people change them on two branches, and `merge-fix` leaves them to you: `changelog.json` and `baselines/` when two people release (keep both entries), `layout.json` (all positions of the diagram are in one file), `logical/links.json` (one file for all connections, numbered `L1`, `L2` ...: two people who each add a connection on their own branch both create the next number, so after the merge one of the two must be renumbered by hand), and the number of a new harness (two new interfaces get the same harness number on two branches; run `generate` after the merge and read what it says). Files in `outputs/`, if you keep them in Git, are made from the design: after a merge run `export` again, or leave the folder out of Git.
+
+### The change journal after a merge
+
+The change journal is the file `journal.jsonl`, one entry per line ([format](../FILE_FORMAT.md#overrides-and-the-change-journal-transparency-work-stage-s4-schema-version-stays-1)). Each entry names the entry before it on its own branch, so when two people each saved changes on their own branch, both branches' entries stay valid after Git has put their lines together. With the line `journal.jsonl merge=union` in `.gitattributes`, the merge does not stop on the journal at all. Then record the merge in the journal:
+
+```
+harness-design-studio merge-fix design
+git add -A
+git commit
+```
+
+`merge-fix` adds one entry of kind `merge` that names the last entry of each branch, and writes nothing else when no file is in conflict. If you do not run it, the journal still reads and `validate` passes; the entry only records that two lines of work met. When the journal is in conflict because the `.gitattributes` line is missing, `merge-fix` keeps the lines of both sides (what `merge=union` would have done) before it adds the entry. The journal shows the entries by time, then author, so the number in front of an entry (`#7`) can change after a merge. A changed or removed entry is still found: `validate` reports `journal_damaged`, on either branch's entries.
+
+**Not verified:** whether the *Merge* button of a pull request on the GitHub web site honours `merge=union`. Git on your computer and on a build server does. If a web merge reports a conflict in `journal.jsonl`, merge on your computer and run `merge-fix`.
 
 In the app, a project that changes on disk (for example after a `git pull`) shows "Project changed on disk" with **Reload** and **Keep my version**.
 

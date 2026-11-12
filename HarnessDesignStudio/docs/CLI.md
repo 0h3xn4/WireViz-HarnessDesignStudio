@@ -76,7 +76,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `diff` | `ok`, `harness`, `from`, `to`, `added`, `removed`, `changed`, `changes` |
 | `compare` | `ok`, `added`, `removed`, `changed`, `changes`, `not_compared` |
 | `log` | `ok`, `harness`, `entries` |
-| `migrate` | `ok`, `migrated`, `from_version`, `to_version`, `backup`, `record`, `self_check` |
+| `migrate` | `ok`, `migrated`, `from_version`, `to_version`, `backup`, `record`, `self_check`, `gitattributes` |
 | `migrate --dry-run` | `ok`, `dry_run`, `up_to_date`, `from_version`, `to_version`, `files`, `counts_before`, `counts_after`, `model_hash_before`, `model_hash_after`, `hash_equal`, `exports_equal`, `baselines_intact`, `journal_entry`, `lost`, `notes` |
 | `journal` | `ok`, `has_journal`, `count`, `entries` |
 | `journal --start` | `ok`, `started`, `file` |
@@ -94,7 +94,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 
 ### harness-design-studio new
 
-Create a project folder from one of the bundled examples. `harness-design-studio new --list` shows them. The folder must not exist yet or be empty. The new project starts a change journal (journal.json: who changed what, when and why) unless you give --no-journal.
+Create a project folder from one of the bundled examples. `harness-design-studio new --list` shows them. The folder must not exist yet or be empty. The new project starts a change journal (journal.jsonl: who changed what, when and why) unless you give --no-journal.
 
 `harness-design-studio new [folder] [options]`
 
@@ -104,7 +104,7 @@ Create a project folder from one of the bundled examples. `harness-design-studio
 | `--template TEMPLATE` | which example to start from (default blank) |
 | `--name NAME` | project name (default: the example's name) |
 | `--list` | list the examples and exit |
-| `--no-journal` | do not start a change journal (journal.json) for the new project |
+| `--no-journal` | do not start a change journal (journal.jsonl) for the new project |
 | `--annotate-config` | write the unit, range, source and use of every setting into the config files as comments (`_about`); off by default |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
@@ -353,7 +353,7 @@ harness-design-studio deviation wheel-link current-over-wire.W001-001 --remove
 
 ### harness-design-studio journal
 
-The change journal: an entry for every change of a design input, a configuration value, an override, a waiver or deviation, a part approval and a release, with who made it, when (UTC), the value before and after, and the reason where the model holds one. Entries are made when the project is saved, so every way of changing it is recorded; generation is one entry for each harness. The journal is the file journal.json, which a project has only if you start one (`new` starts one; `--start` starts one for an existing project): it is append-only, an entry cannot be changed or removed, and a damaged journal is reported by `validate`. It is not part of the model hash or of any written output. The author is the global option `--author`, else the environment variable HARNESS_AUTHOR, else `unknown` (no name is looked up). `--json` prints the entries as one document; `--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); `--since SEQ` the entries after number SEQ.
+The change journal: an entry for every change of a design input, a configuration value, an override, a waiver or deviation, a part approval and a release, with who made it, when (UTC), the value before and after, and the reason where the model holds one. Entries are made when the project is saved, so every way of changing it is recorded; generation is one entry for each harness. The journal is the file journal.jsonl (one entry per line), which a project has only if you start one (`new` starts one; `--start` starts one for an existing project): it is append-only, an entry cannot be changed or removed, and a damaged journal is reported by `validate`. Git keeps the entries that two branches added (`merge=union` in `.gitattributes`); `merge-fix` then records the merge. The entries are numbered in the order of the journal (by time, then author), so a merge can give the later entries new numbers. A kind of entry this version does not know is shown as `other`. It is not part of the model hash or of any written output. The author is the global option `--author`, else the environment variable HARNESS_AUTHOR, else `unknown` (no name is looked up). `--json` prints the entries as one document; `--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); `--since SEQ` the entries after number SEQ.
 
 `harness-design-studio journal project [options]`
 
@@ -363,7 +363,7 @@ The change journal: an entry for every change of a design input, a configuration
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--since SEQ` | only entries numbered above SEQ |
 | `--object ID` | only entries about this object |
-| `--start` | start a journal for a project that has none (writes journal.json) |
+| `--start` | start a journal for a project that has none (writes journal.jsonl) |
 
 Examples:
 
@@ -448,7 +448,7 @@ harness-design-studio export-data my-design --out my-design-data --run-record --
 
 ### harness-design-studio merge-fix
 
-After a Git merge in which two people each pressed Generate, `generated/generation.json` conflicts. This command keeps this branch's version of that one file, then runs `generate` (which writes the record again for the merged design) and `check`. It refuses, and changes nothing, when any other file of the project is in conflict, and it writes nothing itself apart from that record and what `generate` writes. Commit the result afterwards.
+After a Git merge. When two people each pressed Generate, `generated/generation.json` conflicts: this command keeps this branch's version of that file, then runs `generate` (which writes the record again for the merged design) and `check`. When both added entries to the change journal (`journal.jsonl`), Git keeps the lines of both (`merge=union` in `.gitattributes`); if it stopped on the journal instead, this command keeps both sides' lines. Then it adds one `merge` entry to the journal that names the last entry of each side. It refuses, and changes nothing, when any other file of the project is in conflict, and it writes nothing itself apart from that record, the journal and what `generate` writes. Commit the result afterwards.
 
 `harness-design-studio merge-fix project [options]`
 

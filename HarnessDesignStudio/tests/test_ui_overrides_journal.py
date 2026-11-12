@@ -172,6 +172,37 @@ def test_the_history_window_lists_the_journal_and_filters_it(qtbot, theme, tmp_p
     assert dlg.note.text() == strings.HISTORY_NOTE.format(2)
 
 
+def test_the_history_window_shows_a_merged_journal_and_an_unknown_kind(
+    qtbot,
+    theme,  # noqa: F811
+    tmp_path,
+    monkeypatch,
+):
+    """M7a (D-228): the entries of two lines of work, the merge entry that names them, and a kind
+    this version does not know (shown as "other")."""
+    from harness_design_studio.core.io.layout import journal_bytes
+    from harness_design_studio.core.model import Journal
+
+    folder = a_project_with_a_journal(tmp_path, monkeypatch)
+    base = load_project(folder).project.journal
+
+    def row(who, kind="edit"):
+        return {"kind": kind, "object": "project", "field": "name", "old": None, "new": who,
+                "reason": "", "when": "2026-11-04T10:00:00Z", "author": who, "tool_version": "t"}  # fmt: skip
+
+    ann = base.appended([row("Ann")])
+    bob = base.appended([row("Bob", "signoff")])
+    both = journal.merged(Journal((*ann.lines, bob.lines[-1])))
+    (folder / "journal.jsonl").write_bytes(journal_bytes(both))
+    p = load_project(folder).project
+    dlg = JournalDialog(None, theme, p)
+    qtbot.addWidget(dlg)
+    assert dlg.table.rowCount() == 5
+    kinds = [dlg.table.item(r, 3).text() for r in range(5)]
+    assert kinds[2:] == ["edit", "other", "merge"]
+    assert [dlg.table.item(r, 0).text() for r in range(5)] == ["1", "2", "3", "4", "5"]
+
+
 def test_the_history_window_of_a_project_without_a_journal_offers_to_start_one(
     qtbot,
     theme,  # noqa: F811
@@ -205,7 +236,7 @@ def test_help_has_the_change_history_and_it_starts_a_journal(qtbot, tmp_path):
 
     win.run_dialog = run
     action_named(win, "act-journal").trigger()
-    assert seen and (folder / "journal.json").is_file()
+    assert seen and (folder / "journal.jsonl").is_file()
     assert load_project(folder).project.journal[0].kind == "start"
     win.ctl.release()
 
@@ -214,7 +245,7 @@ def test_new_project_in_the_editor_starts_a_journal(qtbot, tmp_path):
     win = make_window(tmp_path)
     qtbot.addWidget(win)
     win.ctl.new_project(tmp_path / "fresh", "Fresh")
-    assert (tmp_path / "fresh" / "journal.json").is_file()
+    assert (tmp_path / "fresh" / "journal.jsonl").is_file()
     assert win.ctl.project.journal is not None and win.ctl.project.journal[0].object == "project"
     win.ctl.release()
 

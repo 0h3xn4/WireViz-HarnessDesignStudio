@@ -82,7 +82,7 @@ def create_project(
     annotate_config: bool = False,
 ) -> Project:
     """Write a new project to `dest` (a missing or empty folder) from the named example. With
-    `journal` the project starts a change journal (`journal.json`); the command `new` and the
+    `journal` the project starts a change journal (`journal.jsonl`); the command `new` and the
     editor's New project ask for it, the builders of the examples and the tests do not, so that the
     files they make do not depend on the time or on who ran them. With `annotate_config` every
     config file carries its comments (`_about`: unit, range, source and use of each key; opt-in,

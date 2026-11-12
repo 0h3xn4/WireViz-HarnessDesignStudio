@@ -80,19 +80,20 @@ def test_every_fixture_and_every_shipped_example_is_in_format_2() -> None:
 def test_the_step_from_1_to_2_is_a_list_of_parts_that_can_take_one_more_before_2_0_0(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Format 2 is frozen only when 2.0.0 is tagged; a change that is still to come (the journal of
-    M7a) is one more part of the same step, not a format 3."""
-    assert (migrate._v2_number,) == migrate.V1_TO_V2_PARTS
+    """Format 2 is frozen only when 2.0.0 is tagged; a change that is still to come is one more part
+    of the same step, not a format 3. The journal of M7a is the second part (D-228)."""
+    assert (migrate._v2_number, migrate._v2_journal_lines) == migrate.V1_TO_V2_PARTS
     files = {"project.json": {"name": "x", "schema_version": 1}, "journal.json": {"journal": []}}
-
-    def later_part(tree):
-        tree["journal.jsonl"] = tree.pop("journal.json")
-        return tree
-
-    monkeypatch.setattr(migrate, "V1_TO_V2_PARTS", (*migrate.V1_TO_V2_PARTS, later_part))
     out = migrate.migrate_raw(files, 1)
     assert out == {"project.json": {"name": "x", "schema_version": 2}, "journal.jsonl": {"journal": []}}  # fmt: skip
     assert files == {"project.json": {"name": "x", "schema_version": 1}, "journal.json": {"journal": []}}  # fmt: skip
+
+    def later_part(tree):
+        tree["project.json"]["later"] = True
+        return tree
+
+    monkeypatch.setattr(migrate, "V1_TO_V2_PARTS", (*migrate.V1_TO_V2_PARTS, later_part))
+    assert migrate.migrate_raw(files, 1)["project.json"]["later"] is True
 
 
 # ---- a format 1 project of 1.17.1 -------------------------------------------------------------------------
@@ -168,6 +169,7 @@ def test_migrate_upgrades_the_project_of_1_17_1_with_a_backup_and_a_record(
     assert [c.id for c in loose_ends(p.harnesses["W002"])] == ["W002-P2"]
     assert p.diagram_marks["pos:W002-P2"].dx == 120.0
     assert not (root / "journal.json").exists()  # a migration does not start a journal
+    assert not (root / "journal.jsonl").exists()
     assert main(["migrate", str(root)]) == 0
     assert "Already up to date." in capsys.readouterr().out
 

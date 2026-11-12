@@ -86,11 +86,44 @@ def fake_next(monkeypatch: pytest.MonkeyPatch) -> Callable[[], None]:
 def as_format(root: Path, version: int) -> Path:
     """Write the number of `project.json` as `version`, in the bytes the tool writes (canonical
     JSON). With 1 it is the project as a version 1.17.x tool wrote it: the step from 1 to 2 writes
-    the number and nothing else (D-226)."""
+    the number (D-226) and moves the journal from `journal.json` to `journal.jsonl` (M7a, D-228),
+    so a journal is written back as `journal.json` the way 1.17.x wrote it (`as_old_journal`)."""
     f = root / "project.json"
     doc = json.loads(f.read_bytes())
     doc["schema_version"] = version
     f.write_bytes(canonical.dumps(doc))
+    if version < 2:
+        as_old_journal(root)
+    return root
+
+
+def old_journal_payload(entries) -> dict[str, Any]:
+    """The entries (in the order of the journal) as 1.17.x wrote them in `journal.json`: numbered
+    from 1, each chained to the one before it, no parent."""
+    from harness_design_studio.core.model.journal import FIRST_CHAIN, chain_of
+
+    out: list[dict[str, Any]] = []
+    previous = FIRST_CHAIN
+    for n, e in enumerate(entries, start=1):
+        body = e.content()
+        body.pop("parent", None)
+        body["seq"] = n
+        body["chain"] = chain_of(previous, body)
+        previous = body["chain"]
+        out.append(body)
+    return {"journal": out}
+
+
+def as_old_journal(root: Path) -> Path:
+    """Write the journal of a project (`journal.jsonl`) as a tool before M7a wrote it
+    (`journal.json`, one canonical JSON list, D-191); nothing when it has none."""
+    path = root / "journal.jsonl"
+    if not path.is_file():
+        return root
+    journal = load_project(root, migrate=False).project.journal
+    assert journal is not None
+    (root / "journal.json").write_bytes(canonical.dumps(old_journal_payload(journal)))
+    path.unlink()
     return root
 
 

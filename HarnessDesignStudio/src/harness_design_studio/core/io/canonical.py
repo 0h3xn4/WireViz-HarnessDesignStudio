@@ -112,3 +112,44 @@ def loads_strict(data: bytes) -> Any:
     )
     _reject_lone_surrogates(parsed)
     return parsed
+
+
+# ---- one object per line (`journal.jsonl`, M7a, D-228) ------------------------------------------
+
+
+def dumps_line(data: Any) -> bytes:
+    """One object as one line of canonical JSON: sorted keys, no spaces, no line break inside, the
+    text as it is (not escaped to ASCII), ending in a line feed. The same object gives the same
+    bytes, so a line written once is never written differently."""
+    text = json.dumps(
+        data, sort_keys=True, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+    )
+    try:
+        return (text + "\n").encode("utf-8")
+    except UnicodeEncodeError:  # a lone surrogate: not text, cannot be stored
+        raise SaveError(
+            "The project contains a character that is not valid text (a lone surrogate), "
+            "so it cannot be written. Remove or replace that text."
+        ) from None
+
+
+def loads_lines(data: bytes, key: str) -> dict[str, list[Any]]:
+    """A file of one JSON value per line, read as `{key: [value, ...]}` in the order of the lines,
+    with the rules of `loads_strict` for each line. Empty lines are skipped, and so is a carriage
+    return at the end of a line (a Git checkout on Windows may add one). A line that is not valid
+    JSON raises `json.JSONDecodeError` with the line and column in the whole file."""
+    text = data.decode("utf-8")  # UnicodeDecodeError is a ValueError
+    if text.startswith("﻿"):
+        text = text[1:]
+    values: list[Any] = []
+    offset = 0
+    for line in text.split("\n"):
+        start, offset = offset, offset + len(line) + 1
+        bare = line.removesuffix("\r")
+        if not bare.strip():
+            continue
+        try:
+            values.append(loads_strict(bare.encode("utf-8")))
+        except json.JSONDecodeError as exc:
+            raise json.JSONDecodeError(exc.msg, text, start + exc.pos) from None
+    return {key: values}

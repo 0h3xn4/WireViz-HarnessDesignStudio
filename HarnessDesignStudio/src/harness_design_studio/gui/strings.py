@@ -298,7 +298,7 @@ HISTORY_NONE = (
     "what and why, every time the project is saved. A project that has none is saved as before."
 )
 HISTORY_START = "Start a journal"
-HISTORY_START_TIP = "Make journal.json for this project; it is kept from the next save on."
+HISTORY_START_TIP = "Make journal.jsonl for this project; it is kept from the next save on."
 HISTORY_COL_NUMBER = "#"
 HISTORY_COL_WHEN = "When (UTC)"
 HISTORY_COL_WHO = "Who"

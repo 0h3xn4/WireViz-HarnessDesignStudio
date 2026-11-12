@@ -98,7 +98,7 @@ If the check after the write finds a difference, or the write fails, the command
 ## 4. What changed in the folder
 
 - `project.json` says `"schema_version": 2` and the version of the tool that saved it.
-- `journal.json` is now `journal.jsonl`, one entry per line, with every entry as it was and one new entry *migrated from format 1*. A save only adds lines at the end, so the journal of two Git branches merges ([Use Git and CI](use-git-and-ci.md#2-after-a-merge)).
+- `journal.json` is now `journal.jsonl`, one entry per line, with every entry as it was and one new entry *migrated from format 1*. A save only adds lines at the end, so the journal of two Git branches merges ([Use Git and CI](use-git-and-ci.md#the-change-journal-after-a-merge)).
 - `.gitattributes` has the line `journal.jsonl merge=union`, so Git keeps the lines that both sides of a merge added.
 - `.migration-backup-v1/` holds the original files and the record `MIGRATION.json` (the formats, the tool version, the SHA-256 of every file before and after, the model hash and the counts). Git ignores this folder and the `.bak` files (they are in the project's `.gitignore`). Keep the folder until you have looked at the upgraded project; then you can delete it.
 

@@ -79,7 +79,7 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
         ("harness", "physical/harnesses/*.json", Harness),
         ("generation", "generated/generation.json", GenerationRecord),
         ("waivers", "waivers.json", _list_file("WaiversFile", "waivers", Waiver)),
-        ("journal", "journal.json", _list_file("JournalFile", "journal", JournalEntry)),
+        ("journal", "journal.jsonl", JournalEntry),  # one entry per line (M7a, D-228)
         ("changelog", "changelog.json", _list_file("ChangeFile", "changelog", ChangeEntry)),
         (
             "import-records",
@@ -111,6 +111,9 @@ def schemas() -> dict[str, dict[str, Any]]:
         shown = "library/<category>.json" if name == "parts" else pattern
         schema["description"] = (
             f"Harness Design Studio project file {shown}. Generated from the model."
+            if name != "journal"
+            else f"One line of the Harness Design Studio project file {shown} (one entry per "
+            "line). Generated from the model."
         )
         out[name] = schema
     from harness_design_studio.core.extensions import schema as extension_schema

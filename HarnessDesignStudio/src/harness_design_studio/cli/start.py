@@ -19,7 +19,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         help="create a new project from an example (blank, first-steps, minimal-satellite, small-satellite, flatsat)",
         description="Create a project folder from one of the bundled examples. "
         "`harness-design-studio new --list` shows them. The folder must not exist yet or be empty. "
-        "The new project starts a change journal (journal.json: who changed what, when and why) "
+        "The new project starts a change journal (journal.jsonl: who changed what, when and why) "
         "unless you give --no-journal.",
     )
     n.add_argument("folder", type=Path, nargs="?", help="the new project folder")
@@ -29,7 +29,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     n.add_argument(
         "--no-journal",
         action="store_true",
-        help="do not start a change journal (journal.json) for the new project",
+        help="do not start a change journal (journal.jsonl) for the new project",
     )
     n.add_argument(
         "--annotate-config",

@@ -66,7 +66,8 @@ class Project:
     config: dict[str, ConfigFile] = field(default_factory=default_configs)
     generation: GenerationRecord | None = None
     # The change journal (S4): None for a project that has none; the project has one if and only if
-    # it has the file journal.json. Appended to when the project is saved (`core.journal`).
+    # it has the file journal.jsonl (journal.json in format 1). Appended to when the project is
+    # saved (`core.journal`).
     journal: Journal | None = None
     quarantine: list[QuarantinedItem] = field(default_factory=list)
     quarantine_files: dict[str, bytes] = field(default_factory=dict)
