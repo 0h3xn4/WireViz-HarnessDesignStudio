@@ -1,0 +1,29 @@
+{
+  "interfaces": [
+    {
+      "endpoints": [
+        {
+          "auto": false,
+          "connector_id": "PCDU-J01",
+          "role": null,
+          "unit_id": "PCDU"
+        },
+        {
+          "auto": false,
+          "connector_id": "RW1-J01",
+          "role": null,
+          "unit_id": "RW1"
+        }
+      ],
+      "flow": "a_to_b",
+      "id": "IF-PWR-RW1",
+      "max_current_a": null,
+      "name": "RW1 power",
+      "notes": "",
+      "redundancy": "nominal",
+      "requirement_id": null,
+      "type_id": "power_primary",
+      "voltage_v": null
+    }
+  ]
+}

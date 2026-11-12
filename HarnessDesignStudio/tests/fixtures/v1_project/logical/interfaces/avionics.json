@@ -1,0 +1,29 @@
+{
+  "interfaces": [
+    {
+      "endpoints": [
+        {
+          "auto": false,
+          "connector_id": "OBC-J01",
+          "role": null,
+          "unit_id": "OBC"
+        },
+        {
+          "auto": false,
+          "connector_id": "RW1-J02",
+          "role": null,
+          "unit_id": "RW1"
+        }
+      ],
+      "flow": "bidirectional",
+      "id": "IF-TM-RW1",
+      "max_current_a": null,
+      "name": "RW1 command and telemetry",
+      "notes": "",
+      "redundancy": "nominal",
+      "requirement_id": null,
+      "type_id": "rs422",
+      "voltage_v": null
+    }
+  ]
+}

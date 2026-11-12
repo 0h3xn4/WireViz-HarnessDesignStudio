@@ -1,0 +1,10 @@
+{
+  "name": "naming",
+  "placeholder": false,
+  "values": {
+    "box_connector": "{unit}-J{n:02d}",
+    "cable_connector": "{harness}-P{n}",
+    "harness": "W{n:03d}",
+    "wire": "{harness}-{n:03d}"
+  }
+}

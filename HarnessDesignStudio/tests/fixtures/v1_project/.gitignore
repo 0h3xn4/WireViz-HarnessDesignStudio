@@ -1,0 +1,6 @@
+*.bak
+.harness.lock
+.harness.lock.takeover
+.*.tmp
+.harness-recovery/
+.migration-backup-v*/

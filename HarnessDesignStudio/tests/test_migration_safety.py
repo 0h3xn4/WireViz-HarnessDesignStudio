@@ -5,11 +5,12 @@
 
 What is checked: the model hash does not depend on the format number, and the hashes of format-1
 projects (those stored in `tests/fixtures/migration/hashes.json`, made with the code that had no such
-rule) are what they were; a fake format 2, registered here and never shipped, is run over every
-fixture, example and scenario of `tests/migration_support.py` and changes no hash, no finding, no
-baseline and no byte of a full export; the dry run writes nothing; the record is written; the check
-after the write puts everything back on any difference; and a killed upgrade, a read-only folder and
-a linked file leave the project as it was."""
+rule) are what they were; the step from format 1 to 2 (real since D-226; it was a fake of the tests
+in 1.17.0) is run over every fixture, example and scenario of `tests/migration_support.py`, written
+in format 1, and changes no hash, no finding, no baseline and no byte of a full export; the dry run
+writes nothing; the record is written; the check after the write puts everything back on any
+difference; and a killed upgrade, a read-only folder and a linked file leave the project as it was.
+A fake format one ahead of this tool (never shipped) gives the refusals something to refuse."""
 
 import hashlib
 import json
@@ -33,6 +34,7 @@ from tests.helpers import FIXTURES, copy_project
 from tests.migration_support import (
     GOLDEN,
     SCENARIOS,
+    as_format,
     build,
     changing_step,
     folder_bytes,
@@ -41,7 +43,6 @@ from tests.migration_support import (
     install_fake_format,
     lossy_step,
 )
-from tests.migration_support import fake_v2 as fake_v2  # noqa: F401  (a fixture)
 
 V0 = FIXTURES / "v0_project"
 NAMES = list(SCENARIOS)
@@ -101,14 +102,12 @@ def test_the_model_hash_and_the_content_hash_do_not_depend_on_the_format_number(
 @pytest.mark.parametrize("name", NAMES)
 def test_every_hash_of_a_format_1_project_is_what_it_was(name: str, tmp_path: Path) -> None:
     """The stored hashes were made with the code of master, which had no hash rule: the model hash,
-    the content hash and the content hash stored in each baseline are byte for byte the same, and
-    the same again when the file says format 2."""
+    the content hash and the content hash stored in each baseline are byte for byte the same, in
+    format 2 (this tool writes it, D-226) and when the file says format 1."""
     gold = json.loads(GOLDEN.read_text(encoding="utf-8"))[name]
     root = build(name, tmp_path / "p")
     assert hashes_of(root) == gold, "a hash of a format-1 project changed: the rule is wrong"
-    meta = json.loads((root / "project.json").read_text(encoding="utf-8"))
-    meta["schema_version"] = 2
-    (root / "project.json").write_bytes(canonical.dumps(meta))
+    as_format(root, 1)
     assert hashes_of(root) == gold
 
 
@@ -125,11 +124,11 @@ def test_released_baselines_keep_the_content_hash_they_were_released_with(tmp_pa
 
 
 @pytest.mark.parametrize("name", NAMES)
-def test_a_fake_format_2_changes_no_hash_no_finding_no_baseline_and_no_byte_of_an_export(
-    name: str, tmp_path: Path, fake_v2
+def test_the_step_from_1_to_2_changes_no_hash_no_finding_no_baseline_and_no_byte_of_an_export(
+    name: str, tmp_path: Path
 ) -> None:
     root = build(name, tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     had_journal = (root / "journal.json").exists()
     files = folder_bytes(root)
     old_export = full_export(root, migrate_old=False)
@@ -189,9 +188,9 @@ def test_a_fake_format_2_changes_no_hash_no_finding_no_baseline_and_no_byte_of_a
     assert upgrade.upgrade_project(root) is None  # now current
 
 
-def test_the_record_is_outside_the_hash_and_every_output(tmp_path: Path, fake_v2) -> None:
+def test_the_record_is_outside_the_hash_and_every_output(tmp_path: Path) -> None:
     root = build("mini3", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     fingerprint, export = disk_fingerprint(root), full_export(root, migrate_old=False)
     done = upgrade.upgrade_project(root)
     assert (root / done.record).is_file()
@@ -205,10 +204,10 @@ def test_the_record_is_outside_the_hash_and_every_output(tmp_path: Path, fake_v2
 
 
 def test_a_migration_writes_one_journal_entry_and_only_for_a_project_with_a_journal(
-    tmp_path: Path, fake_v2
+    tmp_path: Path,
 ) -> None:
     kept = build("journal-and-overrides", tmp_path / "j")
-    fake_v2()
+    as_format(kept, 1)
     before = load_project(kept).project.journal
     assert before is not None
     upgrade.upgrade_project(kept)
@@ -220,8 +219,8 @@ def test_a_migration_writes_one_journal_entry_and_only_for_a_project_with_a_jour
     last = entries[-1]
     assert (last.kind, last.object, last.reason) == ("edit", "project", "migrated from format 1")
     assert (last.old, last.new) == (1, 2)
-    plain = build("mini3", tmp_path / "m")
-    upgrade.upgrade_project(plain)
+    plain = as_format(build("mini3", tmp_path / "m"), 1)
+    assert upgrade.upgrade_project(plain) is not None
     assert not (plain / "journal.json").exists()  # a migration does not start a journal
 
 
@@ -247,11 +246,9 @@ def test_the_dry_run_of_a_current_project_says_so(tmp_path: Path, capsys) -> Non
     assert list(doc) == list(SHAPES["migrate --dry-run"]) and doc["up_to_date"] is True
 
 
-def test_the_dry_run_prints_what_would_happen_and_writes_nothing(
-    tmp_path: Path, capsys, fake_v2
-) -> None:
+def test_the_dry_run_prints_what_would_happen_and_writes_nothing(tmp_path: Path, capsys) -> None:
     root = build("journal-and-overrides", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = folder_bytes(root)
     assert main(["migrate", str(root), "--dry-run"]) == 0
     out = capsys.readouterr().out
@@ -274,7 +271,7 @@ def test_the_dry_run_of_a_real_old_project(tmp_path: Path, capsys) -> None:
     root = copy_project(V0, tmp_path / "p")
     files = folder_bytes(root)
     assert main(["migrate", str(root), "--dry-run"]) == 0
-    assert "Project format 0; this tool writes format 1." in capsys.readouterr().out
+    assert "Project format 0; this tool writes format 2." in capsys.readouterr().out
     assert folder_bytes(root) == files
 
 
@@ -297,7 +294,7 @@ def test_the_dry_run_fails_when_something_would_be_lost_or_changed(
     # and the upgrade itself refuses, before it writes a byte or makes a backup
     assert main(["migrate", str(root)]) == 1
     assert managed(root) == {k: v for k, v in files.items() if is_managed(k)}
-    assert not (root / ".migration-backup-v1").exists()
+    assert not (root / ".migration-backup-v2").exists()  # (the fake is one format ahead)
 
 
 def test_a_project_in_a_newer_format_cannot_be_upgraded(tmp_path: Path, capsys) -> None:
@@ -310,11 +307,9 @@ def test_a_project_in_a_newer_format_cannot_be_upgraded(tmp_path: Path, capsys) 
     assert main(["migrate", str(root), "--dry-run"]) == 2  # read-only: refused as before
 
 
-def test_a_damaged_project_is_refused_and_nothing_is_written(
-    tmp_path: Path, capsys, fake_v2
-) -> None:
+def test_a_damaged_project_is_refused_and_nothing_is_written(tmp_path: Path, capsys) -> None:
     root = build("mini3", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     unit_file = next((root / "logical" / "units").glob("*.json"))
     doc = json.loads(unit_file.read_text(encoding="utf-8"))
     doc["units"][0]["surprise"] = 1  # a field this tool does not know: the device is set aside
@@ -332,10 +327,10 @@ def test_a_damaged_project_is_refused_and_nothing_is_written(
 
 
 def test_migrate_prints_the_record_and_the_check_and_is_then_up_to_date(
-    tmp_path: Path, capsys, fake_v2
+    tmp_path: Path, capsys
 ) -> None:
     root = build("sat15", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     assert main(["migrate", str(root), "--json"]) == 0
     doc = json.loads(capsys.readouterr().out)
     assert list(doc) == list(SHAPES["migrate"])
@@ -350,7 +345,7 @@ def test_migrating_a_real_old_project_writes_the_record_and_checks_itself(tmp_pa
     root = copy_project(V0, tmp_path / "p")
     original = managed(root)
     done = upgrade.upgrade_project(root)
-    assert done is not None and (done.from_version, done.to_version) == (0, 1)
+    assert done is not None and (done.from_version, done.to_version) == (0, 2)
     assert done.self_check["reload"] and done.self_check["exports"]
     for rel, data in original.items():
         assert (root / ".migration-backup-v0" / rel).read_bytes() == data
@@ -364,10 +359,10 @@ def test_migrating_a_real_old_project_writes_the_record_and_checks_itself(tmp_pa
 
 
 def test_a_failure_while_the_backup_is_made_leaves_the_project_alone(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fake_v2
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = build("sat15", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = folder_bytes(root)
     real, calls = saver.shutil.copyfile, []
 
@@ -387,13 +382,13 @@ def test_a_failure_while_the_backup_is_made_leaves_the_project_alone(
 
 
 def test_a_kill_while_the_backup_is_made_leaves_a_partial_folder_that_is_not_used(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fake_v2
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     class Killed(BaseException):
         pass
 
     root = build("sat15", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = folder_bytes(root)
     real, calls = saver.shutil.copyfile, []
 
@@ -498,7 +493,7 @@ def test_an_interrupt_while_the_files_are_written_puts_every_file_back_and_goes_
     assert managed(root) == files
 
 
-def test_a_read_only_folder_is_refused_before_a_file_is_changed(tmp_path: Path, fake_v2) -> None:
+def test_a_read_only_folder_is_refused_before_a_file_is_changed(tmp_path: Path) -> None:
     if os.name == "nt":
         pytest.skip(
             "a folder's read-only bit does not stop writes on Windows (the patched write failure below covers the path)"
@@ -506,7 +501,7 @@ def test_a_read_only_folder_is_refused_before_a_file_is_changed(tmp_path: Path, 
     if os.geteuid() == 0:
         pytest.skip("root writes to a read-only folder")
     root = build("mini3", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = folder_bytes(root)
     root.chmod(stat.S_IRUSR | stat.S_IXUSR)
     try:
@@ -518,11 +513,11 @@ def test_a_read_only_folder_is_refused_before_a_file_is_changed(tmp_path: Path, 
 
 
 def test_a_folder_that_refuses_the_writes_gets_every_file_back(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fake_v2
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """(The write fails after the backup: a folder that took the copy but not the project file.)"""
     root = build("journal-and-overrides", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = managed(root)
 
     def refuse(path, data, **kw):
@@ -536,11 +531,11 @@ def test_a_folder_that_refuses_the_writes_gets_every_file_back(
 
 
 def test_a_linked_project_file_is_not_read_or_copied_and_the_upgrade_is_refused(
-    tmp_path: Path, fake_v2
+    tmp_path: Path,
 ) -> None:
     secret = tmp_path / "elsewhere.json"
     root = build("sat15", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     unit_file = next((root / "logical" / "units").glob("*.json"))
     secret.write_bytes(unit_file.read_bytes())
     unit_file.unlink()
@@ -555,9 +550,9 @@ def test_a_linked_project_file_is_not_read_or_copied_and_the_upgrade_is_refused(
     assert not (root / ".migration-backup-v1").exists()
 
 
-def test_a_difference_found_after_the_write_puts_everything_back(tmp_path: Path, fake_v2) -> None:
+def test_a_difference_found_after_the_write_puts_everything_back(tmp_path: Path) -> None:
     root = build("released", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = managed(root)
 
     def tamper() -> None:  # whatever goes wrong between the write and the check
@@ -577,9 +572,9 @@ def test_a_difference_found_after_the_write_puts_everything_back(tmp_path: Path,
     assert upgrade.upgrade_project(root) is not None  # and the next attempt works
 
 
-def test_a_changed_baseline_is_found_by_the_check(tmp_path: Path, fake_v2) -> None:
+def test_a_changed_baseline_is_found_by_the_check(tmp_path: Path) -> None:
     root = build("released", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = managed(root)
 
     def tamper() -> None:
@@ -595,10 +590,10 @@ def test_a_changed_baseline_is_found_by_the_check(tmp_path: Path, fake_v2) -> No
 
 
 def test_a_failed_check_is_exit_1_on_the_command_line(
-    tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch, fake_v2
+    tmp_path: Path, capsys, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root = build("mini3", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     files = managed(root)
     monkeypatch.setattr(
         upgrade, "self_check", lambda *a, **k: ({"exports": False}, ["A full export differs."])
@@ -609,9 +604,9 @@ def test_a_failed_check_is_exit_1_on_the_command_line(
     assert managed(root) == files
 
 
-def test_an_earlier_backup_is_never_overwritten(tmp_path: Path, fake_v2) -> None:
+def test_an_earlier_backup_is_never_overwritten(tmp_path: Path) -> None:
     root = build("mini3", tmp_path / "p")
-    fake_v2()
+    as_format(root, 1)
     upgrade.upgrade_project(root)
     # the project goes back to format 1 (a Git checkout of an older state); the backup is still there
     meta = json.loads((root / "project.json").read_text(encoding="utf-8"))
@@ -636,7 +631,7 @@ _NAMES = st.text(
     st.booleans(),
     st.booleans(),
 )
-def test_a_fake_format_2_changes_nothing_in_a_random_project(
+def test_the_step_from_1_to_2_changes_nothing_in_a_random_project(
     base, names, generate, journal_on
 ) -> None:
     from harness_design_studio.core import journal
@@ -645,7 +640,7 @@ def test_a_fake_format_2_changes_nothing_in_a_random_project(
     from harness_design_studio.core.io.saver import save_project
     from harness_design_studio.core.samples import mini3, sat15
 
-    with pytest.MonkeyPatch.context() as mp, tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory() as tmp:
         p = {"mini3": mini3, "sat15": sat15}[base]()
         for uid, name in zip(sorted(p.units), names, strict=False):
             apply_ops(p, [Put("units", evolve(p.units[uid], name=name))])
@@ -656,7 +651,7 @@ def test_a_fake_format_2_changes_nothing_in_a_random_project(
         root = Path(tmp) / "p"
         save_project(p, root)
         old_hash, old_export = model_hash(load_project(root).project), full_export(root)
-        install_fake_format(mp)
+        as_format(root, 1)  # as a 1.17.x tool wrote it
         done = upgrade.upgrade_project(root)
         assert done is not None and all(done.self_check.values())
         assert model_hash(load_project(root).project) == old_hash

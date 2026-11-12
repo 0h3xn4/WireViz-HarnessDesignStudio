@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index,union-attr"
-"""REQ-MIGRATE-04: the real step from format 1 to format 2 is wired and empty (M4a of the 2.0
-programme, D-201). Format 2 is the format that may hold a loose cable end. The step writes the
-number and nothing else: the origin of a harness is worked out and never stored, a loose end is new
-content, so no hash, finding, baseline or written output of a format 1 project moves. `SCHEMA_VERSION`
-stays 1 in this change; these tests set it to 2 for the length of one test, with the real step, and
-run the migration safety net (REQ-MIGRATE-02) over a project that holds loose ends, a released
-harness with a loose end, and a project with a harness made from a connection."""
+"""REQ-MIGRATE-04: the real step from format 1 to format 2 is empty (M4a of the 2.0 programme,
+D-201; in force since D-226). Format 2 is the format that may hold a loose cable end. The step writes
+the number and nothing else: the origin of a harness is worked out and never stored, a loose end is
+new content, so no hash, finding, baseline or written output of a format 1 project moves. A version
+1.17.1 tool already wrote loose ends into format 1 files; these tests write such projects in format 1
+(`as_format`) and run the migration safety net (REQ-MIGRATE-02) over a project that holds loose ends,
+a harness released with a loose end, and a project with a harness made from a connection."""
 
 import copy
 import json
@@ -28,7 +28,7 @@ from harness_design_studio.core.vcs.hashing import content_hash
 from harness_design_studio.core.vcs.release import plan_release
 from tests.helpers import copy_project
 from tests.loose_support import build_loose
-from tests.migration_support import build, folder_bytes, full_export, install_real_format_2
+from tests.migration_support import as_format, build, folder_bytes, full_export
 
 
 @pytest.fixture(scope="module")
@@ -40,14 +40,15 @@ def loose_root(tmp_path_factory) -> Path:
     return root
 
 
-def test_the_step_is_registered_but_not_run_while_the_format_is_one() -> None:
-    assert SCHEMA_VERSION == 1 and migrate.current_version() == 1  # the lead moves the number
+def test_the_step_writes_the_number_and_runs_for_a_format_1_project() -> None:
+    assert SCHEMA_VERSION == 2 and migrate.current_version() == 2  # in force (D-226)
     assert sorted(migrate.MIGRATIONS) == [0, 1]
     files = {"project.json": {"name": "x", "schema_version": 1}, "logical/units/u.json": {"a": 1}}
     out = migrate.MIGRATIONS[1](files)
     assert out["project.json"] == {"name": "x", "schema_version": 2}
     assert out["logical/units/u.json"] == {"a": 1} and files["project.json"]["schema_version"] == 1
-    assert migrate.migrate_raw(copy.deepcopy(files), 1) == files  # nothing runs at format 1
+    assert migrate.migrate_raw(copy.deepcopy(files), 1) == out
+    assert migrate.migrate_raw(copy.deepcopy(out), 2) == out  # nothing runs at format 2
 
 
 def test_the_step_changes_only_the_number_of_a_project_that_holds_loose_ends(loose_root) -> None:
@@ -56,19 +57,19 @@ def test_the_step_changes_only_the_number_of_a_project_that_holds_loose_ends(loo
         for rel, data in layout.serialize(load_project(loose_root).project).items()
         if rel.endswith(".json")
     }
+    raw["project.json"]["schema_version"] = 1  # as 1.17.1 wrote it
     out = migrate.MIGRATIONS[1](raw)
     assert {k for k in raw if raw[k] != out[k]} == {"project.json"}
     assert {**out["project.json"], "schema_version": 1} == raw["project.json"]
 
 
 def test_the_net_upgrades_a_project_that_holds_loose_ends_with_only_the_number(
-    loose_root, tmp_path, monkeypatch
+    loose_root, tmp_path
 ) -> None:
-    root = copy_project(loose_root, tmp_path / "p")
+    root = as_format(copy_project(loose_root, tmp_path / "p"), 1)
     before_project = load_project(root).project
     before = (model_hash(before_project), content_hash(before_project))
     old_export = full_export(root)
-    install_real_format_2(monkeypatch)
     plan = upgrade.plan_upgrade(root)
     assert plan.ok and plan.hash_equal and plan.exports_equal, plan.lost
     assert plan.baselines_intact is not False
@@ -84,7 +85,7 @@ def test_the_net_upgrades_a_project_that_holds_loose_ends_with_only_the_number(
 
 
 def test_the_net_keeps_the_baseline_of_a_harness_released_with_a_loose_end(
-    loose_root, tmp_path, monkeypatch
+    loose_root, tmp_path
 ) -> None:
     root = copy_project(loose_root, tmp_path / "p")
     p = load_project(root).project
@@ -103,7 +104,7 @@ def test_the_net_keeps_the_baseline_of_a_harness_released_with_a_loose_end(
     save_project(p, root)
     baselines = {k: v for k, v in folder_bytes(root).items() if k.startswith("baselines/")}
     assert baselines
-    install_real_format_2(monkeypatch)
+    as_format(root, 1)
     plan_up = upgrade.plan_upgrade(root)
     assert plan_up.ok and plan_up.baselines_intact is True, plan_up.lost
     upgrade.upgrade_project(root)
@@ -112,9 +113,7 @@ def test_the_net_keeps_the_baseline_of_a_harness_released_with_a_loose_end(
     assert q.baselines["W013.A"].content_hash == content_hash(q)
 
 
-def test_the_origin_of_a_hand_made_and_a_linked_harness_needs_no_stored_value(
-    tmp_path, monkeypatch
-) -> None:
+def test_the_origin_of_a_hand_made_and_a_linked_harness_needs_no_stored_value(tmp_path) -> None:
     """The finding behind D-201: writing `origin` into the harness files changes the model hash and
     the export, and the net refuses. Worked out, it needs no file to change: the step is empty."""
     from harness_design_studio.core.commands import apply_ops
@@ -130,7 +129,7 @@ def test_the_origin_of_a_hand_made_and_a_linked_harness_needs_no_stored_value(
     origins = harness_origins(load_project(root).project)
     assert sorted(origins.values()) == ["drawn", "link"] and origins[hid] == "drawn"
     assert not any(b'"origin"' in data for data in folder_bytes(root).values())
-    install_real_format_2(monkeypatch)
+    as_format(root, 1)
     plan = upgrade.plan_upgrade(root)
     assert plan.ok and plan.hash_equal and plan.exports_equal, plan.lost
     assert sorted(plan.files) == ["project.json"]

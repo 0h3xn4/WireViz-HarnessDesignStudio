@@ -28,24 +28,38 @@ def _v0_to_v1(files: RawFiles) -> RawFiles:
     return out
 
 
-def _v1_to_v2(files: RawFiles) -> RawFiles:
-    """v1 to v2 (M4, D-201): the number only. Format 2 is the format that may hold a loose cable end
-    (a connector with the role `loose`), and a tool that writes it says so, so that a version 1.x
-    tool opens the project read-only instead of setting a harness aside piece by piece. Nothing in
-    a format 1 project has to change for that: a loose end is new content, and the origin of a
-    harness (`interfaces`, `link` or `drawn`) is worked out from `generated` and the connection that
-    names it, never stored (`core.origin`), so no harness file, no hash and no output moves. The
-    step is registered now and runs once `SCHEMA_VERSION` is 2 (decided separately); the migration
-    safety net (`core.io.upgrade`) proves it changes no hash, finding or output."""
-    out = copy.deepcopy(files)
-    meta = out.get("project.json")
+def _v2_number(files: RawFiles) -> RawFiles:
+    """The number: a tool that writes format 2 says so, so that a version 1.x tool opens the project
+    read-only instead of setting a harness aside piece by piece."""
+    meta = files.get("project.json")
     if isinstance(meta, dict):
         meta["schema_version"] = 2
+    return files
+
+
+# The parts of the step from format 1 to 2, run in this order on a copy of the files. Format 2 is
+# not frozen until 2.0.0 is tagged (D-226): a change that is still to come before then (the journal
+# layout of M7a) is one more part here, not a format 3. After the tag, only sparse fields.
+V1_TO_V2_PARTS: tuple[Callable[[RawFiles], RawFiles], ...] = (_v2_number,)
+
+
+def _v1_to_v2(files: RawFiles) -> RawFiles:
+    """v1 to v2 (M4, D-201, D-226). Format 2 is the format that may hold a loose cable end (a
+    connector with the role `loose` and the part `TBD-CONNECTOR`; its place on the diagram is the
+    mark `pos:<connector id>` in `diagram/marks.json`, outside the model hash). Nothing in a
+    format 1 project has to change for that: a loose end is new content, and the origin of a
+    harness (`interfaces`, `link` or `drawn`) is worked out from `generated` and the connection that
+    names it, never stored (`core.origin`), so no harness file, no hash and no output moves; the
+    step writes the number and nothing else (`V1_TO_V2_PARTS`). The migration safety net
+    (`core.io.upgrade`) proves it changes no hash, finding or output."""
+    out = copy.deepcopy(files)
+    for part in V1_TO_V2_PARTS:
+        out = part(out)
     return out
 
 
-# `MIGRATIONS[n]` takes a project from format n to n + 1. The last entry may be one ahead of the
-# format this tool writes (`SCHEMA_VERSION`): it is ready, and it only runs once the number moves.
+# `MIGRATIONS[n]` takes a project from format n to n + 1; there is one for every format before the
+# one this tool writes (`SCHEMA_VERSION`).
 MIGRATIONS: dict[int, Callable[[RawFiles], RawFiles]] = {0: _v0_to_v1, 1: _v1_to_v2}
 
 

@@ -64,5 +64,9 @@
  "sat15_full": {
   "content_hash": "e3649d7ddfd8ca80910e6f2fee77141fe140b6448b9c3ae4d100e77eea546af4",
   "model_hash": "e3649d7ddfd8ca80910e6f2fee77141fe140b6448b9c3ae4d100e77eea546af4"
+ },
+ "v1_project": {
+  "content_hash": "268eab67114456c27afdb90209a9d86efb1dac6679def48b9abf2c6fb0e2acbf",
+  "model_hash": "268eab67114456c27afdb90209a9d86efb1dac6679def48b9abf2c6fb0e2acbf"
  }
 }
