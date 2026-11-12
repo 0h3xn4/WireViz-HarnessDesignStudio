@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.1 model 685abea7f9b9
-# harness-design-studio 1.17.1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 2.0.0rc1 model 9522ec706cf0
+# harness-design-studio 2.0.0rc1. Provided as is, without warranty. Verify before use.
 Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
 (no part),unknown,,,,missing from parts list,0,m,2,W001
 EX-MICROD-9-F,connector,,,"Micro-D 9-pin, female (example, baseline power and data)",pending (example data),1,ea,,W001
