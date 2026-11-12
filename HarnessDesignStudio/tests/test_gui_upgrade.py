@@ -70,6 +70,21 @@ def test_upgrade_is_asked_once_and_does_the_upgrade(win, tmp_path: Path) -> None
     win.ctl.release()
 
 
+def test_the_upgrade_says_to_export_again_when_an_older_version_wrote_the_outputs(
+    win, tmp_path: Path
+) -> None:
+    root = old_project(tmp_path)
+    provenance = root / "outputs" / "system" / "provenance.json"
+    provenance.parent.mkdir(parents=True)
+    provenance.write_text(json.dumps({"tool_version": "1.17.1"}), encoding="utf-8")
+    answers(win, "upgrade")
+    assert win.open_project(root)
+    done = [m for m in win.toasts.messages if "Upgraded from format 1 to 2." in m]
+    assert done and done[0].endswith(strings.UPGRADED_EXPORT_AGAIN.format(old="1.17.1"))
+    assert "export them again once" in done[0]
+    win.ctl.release()
+
+
 def test_open_read_only_changes_nothing_on_disk(win, tmp_path: Path) -> None:
     root = old_project(tmp_path)
     files = folder_bytes(root)
@@ -78,7 +93,71 @@ def test_open_read_only_changes_nothing_on_disk(win, tmp_path: Path) -> None:
     assert asked == [(1, 2)] and win.ctl.read_only
     assert win.ctl.project.migrated_from == 1  # read in memory only
     assert folder_bytes(root) == files and not (root / ".migration-backup-v1").exists()
+    # the note of the user manual (docs/user-manual/upgrade-a-project.md, section 2) is the banner
+    # (and not a toast as well, with the same words); before the end-to-end test of 2.0.0rc1 the
+    # banner gave the reasons of a newer format or another window, and no note was shown
+    note = "This project is in format 1, so it is open read-only. Upgrade it to edit it."
+    assert strings.OPEN_OLD_FORMAT.format(old=1) == note == win.ctl.open_note
+    assert note not in win.toasts.messages
+    QApplication.processEvents()
+    assert win.banner.isVisibleTo(win) and win.banner.label.text() == note
+    assert win.banner.button.text() == strings.UPGRADE_ASK
     win.ctl.release()
+
+
+def test_the_banner_upgrades_a_project_opened_read_only(win, tmp_path: Path) -> None:
+    """*Upgrade it to edit it*: the banner's button asks the question again, without closing."""
+    root = old_project(tmp_path)
+    asked = answers(win, "read_only", "cancel", "upgrade")
+    assert win.open_project(root) and win.ctl.read_only
+    win.banner.button.click()  # Cancel: it stays open read-only, nothing written
+    assert win.ctl.read_only and win.ctl.root == root
+    assert not (root / ".migration-backup-v1").exists()
+    win.banner.button.click()  # Upgrade
+    assert asked == [(1, 2)] * 3
+    assert not win.ctl.read_only and win.ctl.project.migrated_from is None
+    assert json.loads((root / "project.json").read_text())["schema_version"] == 2
+    QApplication.processEvents()
+    assert not win.banner.isVisibleTo(win)
+    win.ctl.release()
+
+
+def test_the_read_only_banner_names_the_reason(win, tmp_path: Path, monkeypatch) -> None:
+    """Older format, newer format, open in another window, cannot be locked: each its own words."""
+    from harness_design_studio.core.errors import SaveError
+    from harness_design_studio.core.io.fs import ProjectLock
+
+    def banner() -> str:
+        QApplication.processEvents()
+        assert win.banner.isVisibleTo(win) and win.ctl.read_only
+        return str(win.banner.label.text())
+
+    newer = as_format(build("mini3", tmp_path / "newer"), 3)
+    assert win.open_project(newer)
+    assert banner() == strings.BANNER_READ_ONLY_NEWER
+    win.ctl.release()
+
+    in_use = build("mini3", tmp_path / "in_use")
+    with ProjectLock(in_use):  # (another window has it)
+        win.ask_choice = lambda title, text, buttons: 0  # "Open read-only"
+        assert win.open_project(in_use)
+        assert banner() == strings.BANNER_READ_ONLY_IN_USE
+        win.ctl.release()
+
+    no_lock = build("mini3", tmp_path / "no_lock")
+
+    def refuse(self) -> None:
+        raise SaveError("the folder is read-only")
+
+    monkeypatch.setattr(ProjectLock, "acquire", refuse)
+    assert win.open_project(no_lock)
+    assert banner() == strings.BANNER_READ_ONLY_NO_LOCK
+    win.ctl.release()
+    assert strings.BANNER_READ_ONLY not in {
+        strings.BANNER_READ_ONLY_NEWER,
+        strings.BANNER_READ_ONLY_IN_USE,
+        strings.BANNER_READ_ONLY_NO_LOCK,
+    }
 
 
 def test_cancel_opens_nothing_and_changes_nothing(win, tmp_path: Path) -> None:

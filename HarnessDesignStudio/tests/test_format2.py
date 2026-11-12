@@ -114,6 +114,51 @@ def test_the_project_of_1_17_1_opens_upgraded_in_memory_and_the_disk_is_untouche
     assert folder_bytes(root) == before
 
 
+def test_check_finds_nothing_to_rewrite_in_the_untouched_project_of_1_17_1(
+    tmp_path: Path, capsys
+) -> None:
+    """1.17.1's `check` of these files gives no `not_canonical`; neither does this tool's. The
+    project is read from format 1, so `project.json` is held against the bytes of format 1 (the
+    tool's own formatting with that number), not against what a save would write now, which is
+    format 2 (end-to-end test of 2.0.0rc1). A hand edit of the file is still found."""
+    root = copy_project(V1, tmp_path / "p")
+    before = folder_bytes(root)
+    assert main(["check", str(root), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert [i for i in doc["issues"] if i["code"] == "not_canonical"] == []
+    assert doc["warnings"] == 0
+    assert folder_bytes(root) == before
+    meta = json.loads((root / "project.json").read_text(encoding="utf-8"))
+    (root / "project.json").write_text(json.dumps(meta), encoding="utf-8")  # (not canonical)
+    assert main(["check", str(root), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert [i["location"] for i in doc["issues"] if i["code"] == "not_canonical"] == [
+        "project.json"
+    ]
+
+
+def test_check_of_a_format_1_project_with_a_journal_finds_nothing_to_rewrite(
+    tmp_path: Path, capsys
+) -> None:
+    root = as_format(build("journal-and-overrides", tmp_path / "old"), 1)
+    assert (root / "journal.json").is_file()  # (as 1.17.x wrote it)
+    assert main(["check", str(root), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert [i for i in doc["issues"] if i["code"] == "not_canonical"] == []
+
+
+def test_validate_of_a_format_1_project_says_how_to_upgrade_it(tmp_path: Path, capsys) -> None:
+    """A save into its own folder is refused (D-226), so the note does not say "until you save":
+    it names `migrate` and the editor's Upgrade, the way the refusal of a save does."""
+    root = copy_project(V1, tmp_path / "p")
+    assert main(["validate", str(root)]) == 0
+    out = capsys.readouterr().out
+    line = next(x for x in out.splitlines() if "migrated:" in x)
+    assert "until you save" not in line
+    assert "Nothing was changed on disk." in line
+    assert "`harness-design-studio migrate DIR`" in line and "choose Upgrade" in line
+
+
 def test_format_2_is_format_1_with_another_number(tmp_path: Path) -> None:
     """Saved again by this tool (to a new folder, the way *Save as* does), the project of 1.17.1 is
     the same bytes in every file but `project.json`, and there only the number differs (and the
@@ -172,6 +217,35 @@ def test_migrate_upgrades_the_project_of_1_17_1_with_a_backup_and_a_record(
     assert not (root / "journal.jsonl").exists()
     assert main(["migrate", str(root)]) == 0
     assert "Already up to date." in capsys.readouterr().out
+
+
+def test_migrate_says_to_export_again_when_an_older_version_wrote_the_outputs(
+    tmp_path: Path, capsys
+) -> None:
+    """`verify --outputs` compares `system/provenance.json` with the version that runs, so the
+    outputs that 1.17.1 wrote are exported once more after the upgrade (end-to-end test of
+    2.0.0rc1). `migrate` says so when the outputs name another version, and only then."""
+    root = copy_project(V1, tmp_path / "p")
+    provenance = root / "outputs" / "system" / "provenance.json"
+    provenance.parent.mkdir(parents=True)
+    provenance.write_text(json.dumps({"tool_version": "1.17.1"}), encoding="utf-8")
+    assert main(["migrate", str(root)]) == 0
+    out = capsys.readouterr().out
+    assert (
+        "The outputs in outputs/ were written by version 1.17.1: export them again once with "
+        "this version (`harness-design-studio export DIR`)" in out
+    )
+    assert "verify --outputs" in out
+    plain = copy_project(V1, tmp_path / "plain")  # no outputs: nothing to say
+    assert main(["migrate", str(plain), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["migrated"] and doc["outputs_version"] is None
+    again = copy_project(V1, tmp_path / "again")
+    provenance = again / "outputs" / "system" / "provenance.json"
+    provenance.parent.mkdir(parents=True)
+    provenance.write_text(json.dumps({"tool_version": __version__}), encoding="utf-8")
+    assert main(["migrate", str(again)]) == 0  # outputs of this version: nothing to say
+    assert "export them again" not in capsys.readouterr().out
 
 
 def test_a_journal_gets_one_migrated_entry_and_still_reads(tmp_path: Path) -> None:

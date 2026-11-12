@@ -377,6 +377,14 @@ ZONE_NAME = "Zone name"
 DELETE_TITLE = "Delete {}?"
 DELETE_BODY = "<p>This will also remove:</p><ul><li>{n} interface{s}{ifs}</li><li>{c} connector(s) of the device</li></ul><p>You can undo this with Ctrl+Z.</p>"
 BANNER_READ_ONLY = "Read-only: this project was saved by a newer version of the tool, or is open in another window. You cannot change it here."
+# the banner names the one reason that applies (an older format says OPEN_OLD_FORMAT)
+BANNER_READ_ONLY_NEWER = (
+    "Read-only: this project was saved by a newer version of the tool. You cannot change it here."
+)
+BANNER_READ_ONLY_IN_USE = (
+    "Read-only: this project is open in another window. You cannot change it here."
+)
+BANNER_READ_ONLY_NO_LOCK = "Read-only: this project cannot be locked for editing here (a read-only folder or no permission). You cannot change it here."
 BANNER_RECOVERED = "Parts of this project could not be loaded. Everything else was loaded. The original folder is protected."
 BANNER_SAMPLE = "This is the sample project (example data). Save a copy to keep your changes."
 SAVE_COPY = "Save a copy…"
@@ -395,7 +403,11 @@ UPGRADE_TITLE = "Older project format"
 UPGRADE_BODY = "This project is in format {old}. Upgrade? A copy of the original stays in {backup}. Older tools can no longer edit it."
 UPGRADE_DETAIL = "Nothing is generated and no ID changes. After the upgrade the tool reloads the project and checks that the model hash, the findings, the released baselines and a full export are the same; if any differ, the original files are put back."
 UPGRADE = "Upgrade"
+UPGRADE_ASK = "Upgrade…"
 UPGRADED = "Upgraded from format {old} to {new}. The original files are in {backup}."
+UPGRADED_EXPORT_AGAIN = (
+    " The outputs were written by version {old}: export them again once with this version."
+)
 UPGRADE_FAILED = "The project was not upgraded: {}"
 OPEN_OLD_FORMAT = "This project is in format {old}, so it is open read-only. Upgrade it to edit it."
 RESTORE_TITLE = "Unsaved changes found"
