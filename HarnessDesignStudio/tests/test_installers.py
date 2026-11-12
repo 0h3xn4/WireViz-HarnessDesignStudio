@@ -746,6 +746,9 @@ def test_the_release_notes_list_the_windows_packages_when_they_exist() -> None:
     for command in ("sha256sum -c", "Get-FileHash"):
         assert command in text
     assert "SmartScreen" in text and "macOS" not in text
+    # the install step of the setup program reads as a sentence (the 1.17.1 page said "is has")
+    assert "The package has no Windows code-signing certificate" in text
+    assert " is has " not in text
 
 
 def test_every_release_has_a_highlights_file() -> None:
