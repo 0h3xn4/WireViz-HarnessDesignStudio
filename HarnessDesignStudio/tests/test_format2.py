@@ -23,6 +23,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+from harness_design_studio import __version__
 from harness_design_studio.cli.main import main
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import SaveError
@@ -114,7 +115,8 @@ def test_the_project_of_1_17_1_opens_upgraded_in_memory_and_the_disk_is_untouche
 
 def test_format_2_is_format_1_with_another_number(tmp_path: Path) -> None:
     """Saved again by this tool (to a new folder, the way *Save as* does), the project of 1.17.1 is
-    the same bytes in every file but `project.json`, and there only the number differs."""
+    the same bytes in every file but `project.json`, and there only the number differs (and the
+    version of the tool that saved it, once this tool is no longer 1.17.1)."""
     p = load_project(V1).project
     out = tmp_path / "copy"
     save_project(p, out)
@@ -123,7 +125,9 @@ def test_format_2_is_format_1_with_another_number(tmp_path: Path) -> None:
     assert {k for k in old if old[k] != new[k]} == {"project.json"}
     a, b = json.loads(old["project.json"]), json.loads(new["project.json"])
     numbers = (a.pop("schema_version"), b.pop("schema_version"))
+    versions = (a.pop("tool_version"), b.pop("tool_version"))
     assert numbers == (1, 2) and a == b
+    assert versions == ("1.17.1", __version__)
     assert model_hash(load_project(out).project) == V1_HASH
 
 
