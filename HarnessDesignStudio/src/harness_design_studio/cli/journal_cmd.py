@@ -27,10 +27,14 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "value, an override, a waiver or deviation, a part approval and a release, with who made it, "
         "when (UTC), the value before and after, and the reason where the model holds one. Entries "
         "are made when the project is saved, so every way of changing it is recorded; generation is "
-        "one entry for each harness. The journal is the file journal.json, which a project has only "
-        "if you start one (`new` starts one; `--start` starts one for an existing project): it is "
-        "append-only, an entry cannot be changed or removed, and a damaged journal is reported by "
-        "`validate`. It is not part of the model hash or of any written output. The author is the "
+        "one entry for each harness. The journal is the file journal.jsonl (one entry per line), "
+        "which a project has only if you start one (`new` starts one; `--start` starts one for an "
+        "existing project): it is append-only, an entry cannot be changed or removed, and a "
+        "damaged journal is reported by `validate`. Git keeps the entries that two branches added "
+        "(`merge=union` in `.gitattributes`); `merge-fix` then records the merge. The entries are "
+        "numbered in the order of the journal (by time, then author), so a merge can give the "
+        "later entries new numbers. A kind of entry this version does not know is shown as "
+        "`other`. It is not part of the model hash or of any written output. The author is the "
         "global option `--author`, else the environment variable HARNESS_AUTHOR, else `unknown` "
         "(no name is looked up). `--json` prints the entries as one document; "
         "`--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); "
@@ -42,7 +46,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "--since", type=int, default=0, metavar="SEQ", help="only entries numbered above SEQ"
     )
     j.add_argument("--object", default=None, metavar="ID", help="only entries about this object")
-    j.add_argument("--start", action="store_true", help="start a journal for a project that has none (writes journal.json)")  # fmt: skip
+    j.add_argument("--start", action="store_true", help="start a journal for a project that has none (writes journal.jsonl)")  # fmt: skip
 
     o = sub.add_parser(
         "override",
@@ -112,10 +116,10 @@ def _journal(args: argparse.Namespace, rep: Report) -> int:
         started = journal.start(project)
         if started:
             save_project(project, args.project)
-            rep.say(f"Journal started: {args.project / 'journal.json'}. Changes are recorded when the project is saved.")  # fmt: skip
+            rep.say(f"Journal started: {args.project / 'journal.jsonl'}. Changes are recorded when the project is saved.")  # fmt: skip
         else:
             rep.say("This project has a journal already.")
-        rep.put(started=started, file="journal.json")
+        rep.put(started=started, file="journal.jsonl")
         return 0
     report = records.journal_report(project, args.object, args.since)
     rep.put(**report.to_dict())

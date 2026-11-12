@@ -18,9 +18,12 @@ what makes running them safe, and it knows nothing about any one step:
   `UpgradeFailed` says so.
 
 A migration generates nothing and invents no ID. It adds one entry to the change journal, "migrated
-from format N", and only to a project that has a journal. The model hash does not depend on the
-format number (`layout.schema_one`), so a faithful upgrade changes no hash, no stamp and no
-baseline.
+from format N", and only to a project that has a journal. The journal moves from `journal.json` to
+`journal.jsonl` on the way to format 2 (M7a, D-228): the backup holds `journal.json`, and once the
+upgrade has passed its check the project's `.gitattributes` is made to say
+`journal.jsonl merge=union` (`mergefix.add_journal_union`; it is not a project file, so a rollback
+never has to undo it). The model hash does not depend on the format number
+(`layout.schema_one`), so a faithful upgrade changes no hash, no stamp and no baseline.
 
 The record is outside the project hash and every written output: it lives in the backup folder,
 which no loader, hash or output reads.
@@ -43,7 +46,7 @@ from harness_design_studio.core.model import Project
 
 from . import canonical, migrate
 from .fs import atomic_write_bytes, escapes_root, long_path
-from .layout import model_hash, serialize
+from .layout import JOURNAL_FILE, model_hash, parse_file, serialize
 from .loader import (
     UNREAD_CODES,
     LoadResult,
@@ -146,7 +149,7 @@ def count_raw(files: Mapping[str, Any]) -> dict[str, int]:
 
 def parsed_files(files: Mapping[str, bytes]) -> dict[str, Any]:
     """The bytes of a serialised project parsed again (what `read_tree` makes of a folder)."""
-    return {rel: json.loads(data) for rel, data in files.items()}
+    return {rel: parse_file(rel, data) for rel, data in files.items()}
 
 
 def format_of(folder: Path | str) -> int | None:
@@ -460,7 +463,28 @@ def _files_that_change(base: Path, project: Project, files: Mapping[str, bytes])
             found[rel] = "removed"
     if not (base / ".gitignore").exists():
         found[".gitignore"] = "new"
+    if JOURNAL_FILE in files and not (base / JOURNAL_FILE).is_file():
+        attributes = _gitattributes_change(base)
+        if attributes:
+            found[".gitattributes"] = attributes
     return found
+
+
+def _gitattributes_change(base: Path) -> str:
+    """What `mergefix.add_journal_union` would do to `.gitattributes`: "new", "changed" or ""."""
+    from harness_design_studio.core.mergefix import GITATTRIBUTES_1
+
+    path = base / ".gitattributes"
+    if path.is_symlink():
+        return ""
+    if not path.exists():
+        return "new"
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError, ValueError:
+        return ""
+    named = any(line.split()[:1] == [JOURNAL_FILE] for line in text.splitlines())
+    return "" if named and text != GITATTRIBUTES_1 else "changed"
 
 
 def render_plan(plan: UpgradePlan) -> list[str]:
@@ -504,6 +528,9 @@ class UpgradeResult:
     written: list[str]
     plan: UpgradePlan
     self_check: dict[str, bool | None]
+    # what was done to `.gitattributes` for the journal (`mergefix.add_journal_union`): "" when the
+    # project has no journal
+    gitattributes: str = ""
 
 
 def _record(
@@ -734,8 +761,13 @@ def upgrade_project(
         )
     after = disk_hashes(base)
     _write_record(backup, _record(plan, "complete", before, after, gitignore_existed, check))
+    attributes = ""
+    if (base / JOURNAL_FILE).is_file():
+        from harness_design_studio.core.mergefix import add_journal_union
+
+        attributes = add_journal_union(base)
     return UpgradeResult(
-        plan.from_version, plan.to_version, backup.name, record, written, plan, check
+        plan.from_version, plan.to_version, backup.name, record, written, plan, check, attributes
     )
 
 

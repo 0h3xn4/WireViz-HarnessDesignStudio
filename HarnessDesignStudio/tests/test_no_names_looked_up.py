@@ -86,8 +86,8 @@ def test_run_record_journal_release_and_lock_hold_only_typed_names(tmp_path: Pat
     _assert_no_looked_up_name(texts)
     record = json.loads((folder / "outputs" / "run_record.json").read_text(encoding="utf-8"))
     assert record["operator"] == "unknown"
-    entries = json.loads((folder / "journal.json").read_text(encoding="utf-8"))
-    authors = {e["author"] for e in entries["journal"]}
+    lines = (folder / "journal.jsonl").read_text(encoding="utf-8").splitlines()
+    authors = {json.loads(line)["author"] for line in lines}
     assert "unknown" in authors and TYPED in authors  # nothing looked up; a typed name is kept
     assert any(TYPED in text for name, text in texts.items() if "journal" not in name)
 

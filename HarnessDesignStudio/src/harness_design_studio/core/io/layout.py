@@ -27,11 +27,16 @@ from . import canonical
 from .fs import slug
 
 MANAGED_RE = re.compile(
-    r"^(project\.json|waivers\.json|journal\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
+    r"^(project\.json|waivers\.json|journal\.jsonl?|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
     r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json"
     r"|imports/records\.json|asbuilt/records\.json|diagram/marks\.json)$"
 )
-JOURNAL_FILE = "journal.json"
+# The change journal (M7a, D-228): one entry per line, written by adding lines at the end, so that
+# Git can keep both sides' lines of a merge (`merge=union` in `.gitattributes`). `journal.json` is
+# where a project of format 1 kept it (one JSON list); it is read, and a save writes the new file.
+JOURNAL_FILE = "journal.jsonl"
+OLD_JOURNAL_FILE = "journal.json"
+JOURNAL_FILES = (JOURNAL_FILE, OLD_JOURNAL_FILE)
 MANAGED_DIRS = (
     "config", "library", "logical", "physical", "generated", "baselines", "imports", "asbuilt",
     "diagram",
@@ -50,7 +55,7 @@ DIAGRAM_MARKS_FILE = "diagram/marks.json"
 # the journal and the import record (files the tool writes with the project), and the folders of the
 # extensions (S8) and the as-built records (a later step), which are not serialised at all. The one
 # list: `outside_the_hash(rel)` is what `model_hash` and `journal.files_hash` ask.
-OUTSIDE_THE_HASH_FILES = frozenset({JOURNAL_FILE, IMPORT_RECORDS_FILE})
+OUTSIDE_THE_HASH_FILES = frozenset({*JOURNAL_FILES, IMPORT_RECORDS_FILE})
 OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/", "diagram/")
 
 
@@ -130,7 +135,23 @@ def schema_one(rel: str, data: bytes) -> bytes:
 
 
 def journal_payload(journal: Journal | None) -> dict[str, Any]:
-    return {"journal": [e.model_dump(mode="json") for e in journal or ()]}
+    """The journal as `read_tree` reads its file: `{"journal": [line, ...]}` in the order of the
+    file."""
+    return {"journal": [e.stored() for e in (journal.lines if journal is not None else ())]}
+
+
+def journal_bytes(journal: Journal | None) -> bytes:
+    """`journal.jsonl`: one entry per line, in the order of the file, each line canonical JSON
+    (`canonical.dumps_line`). A save only ever adds lines at the end."""
+    return b"".join(canonical.dumps_line(e.stored()) for e in (journal.lines if journal else ()))
+
+
+def parse_file(rel: str, data: bytes) -> Any:
+    """The content of project file `rel` as `read_tree` reads it (`canonical.loads_strict`; the
+    journal of one entry per line as `{"journal": [entry, ...]}`)."""
+    if rel == JOURNAL_FILE:
+        return canonical.loads_lines(data, "journal")
+    return canonical.loads_strict(data)
 
 
 def is_managed(rel: str) -> bool:
@@ -247,10 +268,8 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
             "logical/links.json", links, lambda: canonical.dumps({"links": _dump(list(links))})
         )
     if project.journal is not None:  # a project has a journal if and only if the file exists
-        kept: list[Any] = list(project.journal)
-        files[JOURNAL_FILE] = memo.get(
-            JOURNAL_FILE, kept, lambda: canonical.dumps(journal_payload(project.journal))
-        )
+        kept: list[Any] = list(project.journal.lines)
+        files[JOURNAL_FILE] = memo.get(JOURNAL_FILE, kept, lambda: journal_bytes(project.journal))
     if project.import_records:  # optional: a project that never imported has no such file
         records = list(project.import_records.values())
         files[IMPORT_RECORDS_FILE] = memo.get(

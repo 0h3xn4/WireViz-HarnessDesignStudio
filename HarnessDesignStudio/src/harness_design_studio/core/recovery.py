@@ -14,8 +14,9 @@ import secrets
 from pathlib import Path
 
 from .errors import SaveError
-from .io.canonical import dumps
+from .io.canonical import dumps, loads_lines
 from .io.fs import atomic_write_bytes, long_path
+from .io.layout import JOURNAL_FILE as CHANGE_JOURNAL_FILE
 from .io.layout import serialize
 from .io.loader import LoadResult, load_from_files
 from .model import Project, QuarantinedItem
@@ -120,12 +121,20 @@ def _read_files(base: Path) -> dict[str, object]:
     return parsed
 
 
+def _parsed(rel: str, text: str) -> object:
+    """A project file of the autosave as `read_tree` reads it (the change journal of one entry per
+    line too)."""
+    if rel == CHANGE_JOURNAL_FILE:
+        return loads_lines(text.encode("utf-8"), "journal")
+    return json.loads(text)
+
+
 def read_journal(root: Path | str) -> LoadResult | None:
     """Load the journalled state, or None if there is no usable journal."""
     path = journal_path(root)
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        files = {rel: json.loads(text) for rel, text in payload["files"].items()}
+        files = {rel: _parsed(rel, text) for rel, text in payload["files"].items()}
     except OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError:
         return None
     result = load_from_files(files)

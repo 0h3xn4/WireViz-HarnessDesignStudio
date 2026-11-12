@@ -934,7 +934,7 @@ def provenance_bytes(project: Project, files: dict[str, bytes], mhash: str) -> b
             "interfaces": len(project.interfaces),
             "harnesses": len(project.harnesses),
             "wires": sum(len(h.wires) for h in project.harnesses.values()),
-            # only whether: journal.json holds a time and a name, so it is not part of this set
+            # only whether: the journal holds a time and a name, so it is not part of this set
             "journal": "present" if project.journal is not None else "absent",
         },
         "imports": _imports(project),

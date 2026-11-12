@@ -5,5 +5,10 @@
 # merge, whatever else they changed. Git treats it as a binary file: it writes no conflict
 # markers into it (the file stays valid JSON) and keeps the version of the branch you are
 # on. After the merge run:  harness-design-studio merge-fix PROJECT_FOLDER
-# Every other file of the project is text and merges line by line.
+# Every other file of the project is text and merges line by line, except the journal.
 generated/generation.json merge=binary linguist-generated=true
+#
+# journal.jsonl is the change journal, one entry per line. Git keeps the lines that both
+# sides of a merge added (merge=union), so it does not conflict; merge-fix then records the
+# merge in it.
+journal.jsonl merge=union

@@ -3,7 +3,9 @@
 """The change journal of a project: who changed what, when, from what to what and why (S4, D-191,
 requirement R8).
 
-A project has a journal if and only if it has the file `journal.json`. It is made by
+A project has a journal if and only if it has the file `journal.jsonl` (one entry per line, since
+format 2 and M7a, D-228; a project of format 1 has `journal.json`, which is read and written as
+`journal.jsonl` by the next save). It is made by
 `harness-design-studio journal DIR --start` and by `new` and the editor's New project; a project
 that has none is opened and saved byte for byte as before.
 
@@ -17,7 +19,7 @@ field.
 
 Where the reason is. The model holds the reason for an override (`Wire.overrides`), a waiver and a
 release; the journal adds who and when. The design files hold no name and no time, and
-`journal.json` is left out of the model hash and of every written output, so the same design still
+the journal is left out of the model hash and of every written output, so the same design still
 gives the same bytes. The clock and the author are read in `now()` and `author()` only, which tests
 replace.
 """
@@ -36,12 +38,17 @@ from harness_design_studio.core.model import (
     JournalError,
     Project,
 )
-from harness_design_studio.core.model.journal import KINDS
+from harness_design_studio.core.model.journal import KINDS, shown_kind
 
 from .io import canonical
-from .io.layout import bytes_for_hash, outside_the_hash, schema_one
+from .io.layout import (
+    JOURNAL_FILE,
+    JOURNAL_FILES,
+    bytes_for_hash,
+    outside_the_hash,
+    schema_one,
+)
 
-JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
 IMPORT_RECORDS_FILE = "imports/records.json"
 ASBUILT_FILE = "asbuilt/records.json"
@@ -51,6 +58,7 @@ BULK = 25  # more objects than this created or removed in one save are one entry
 MAX_FIELDS_PER_OBJECT = 25  # more fields of one object than this changed in one save: one entry
 
 __all__ = [
+    "JOURNAL_FILE",
     "KINDS",
     "Journal",
     "JournalEntry",
@@ -61,6 +69,8 @@ __all__ = [
     "extension_rows",
     "files_hash",
     "history",
+    "merge_rows",
+    "merged",
     "now",
     "render",
     "resolve_author",
@@ -179,6 +189,33 @@ def migration_rows(from_version: int, to_version: int) -> list[Row]:
     ]
 
 
+def merge_rows(journal: Journal) -> list[Row]:
+    """The one entry that records a merge of lines of work (M7a, D-228): after Git kept the
+    entries of two branches (`merge=union`), the journal has two heads, entries that nothing
+    follows. The entry names them all (`new.heads`, their ids) and follows the last of them; [] when
+    the journal has one head. `merge-fix` adds it."""
+    heads = journal.heads()
+    if len(heads) < 2:
+        return []
+    names = [h.chain for h in heads]
+    return [
+        _row(
+            "merge",
+            "journal",
+            "heads",
+            None,
+            {"heads": names},
+            f"Merged the journal of {len(names)} lines of work (merge-fix).",
+        )
+    ]
+
+
+def merged(journal: Journal) -> Journal:
+    """`journal` with the merge entry of `merge_rows` added (the same journal when it has one
+    head)."""
+    return extended(journal, merge_rows(journal))
+
+
 def start(project: Project, reason: str = "") -> bool:
     """Give the project a journal (it records its start). False when it has one already."""
     if project.journal is not None:
@@ -234,7 +271,7 @@ def render_entry(e: JournalEntry) -> str:
     if e.old is not None or e.new is not None:
         change = f": {_show(e.old)} -> {_show(e.new)}"
     why = f" (reason: {e.reason})" if e.reason else ""
-    return f"#{e.seq} {e.when} {e.author} [{e.kind}] {what}{change}{why}"
+    return f"#{e.seq} {e.when} {e.author} [{shown_kind(e.kind)}] {what}{change}{why}"
 
 
 def render(entries: Iterable[JournalEntry]) -> str:
@@ -641,7 +678,9 @@ def rows_for_save(
     """The rows to add to the journal for a save that replaces the files `old` (what is on disk,
     by file name) by `new`. Only the files whose bytes differ are read."""
     changed = sorted(
-        rel for rel in set(old) | set(new) if rel != JOURNAL_FILE and old.get(rel) != new.get(rel)
+        rel
+        for rel in set(old) | set(new)
+        if rel not in JOURNAL_FILES and old.get(rel) != new.get(rel)
     )
     if not changed:
         return []

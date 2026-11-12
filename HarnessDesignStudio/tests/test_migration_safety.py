@@ -67,7 +67,7 @@ def ids_of(root: Path) -> set[str]:
                 walk(v)
 
     for rel, data in managed(root).items():
-        if rel != "journal.json":
+        if rel not in ("journal.json", "journal.jsonl"):
             walk(json.loads(data))
     return found
 
@@ -152,15 +152,21 @@ def test_the_step_from_1_to_2_changes_no_hash_no_finding_no_baseline_and_no_byte
     changed = {
         k for k in files if after.get(k) != files[k] and is_managed(k)
     }  # (the files the tool manages, not litter such as .bak)
-    assert changed >= {"project.json"} | ({"journal.json"} if had_journal else set())
-    assert {k for k in after if is_managed(k) and files.get(k) != after[k]} == {
+    journal_files = {"journal.json"} if had_journal else set()  # moved to journal.jsonl (D-228)
+    assert changed >= {"project.json"} | journal_files
+    assert {k for k in {*after, *files} if is_managed(k) and files.get(k) != after.get(k)} == {
         k for k in plan.files if is_managed(k)
-    }  # the dry run said exactly which files would change
+    }  # the dry run said exactly which files would change (or go)
     if not plan.notes:
-        assert changed == {"project.json"} | ({"journal.json"} if had_journal else set())
-    assert {k for k in after if is_managed(k)} == {k for k in files if is_managed(k)} | {
+        assert changed == {"project.json"} | journal_files
+    assert {k for k in after if is_managed(k)} == {
+        k for k in files if is_managed(k)
+    } - journal_files | {
         k for k, how in plan.files.items() if how == "new" and is_managed(k)
-    }  # (a file that was missing is written with the values in use; nothing is removed)
+    }  # (a file that was missing is written with the values in use; nothing else is removed)
+    assert {k for k, how in plan.files.items() if how == "removed"} == journal_files
+    if had_journal:
+        assert after["journal.json.bak"] == files["journal.json"]  # (and in the backup folder)
     assert hashes_of(root) == old_hashes
     assert upgrade._folder_findings(root) == old_findings
     assert full_export(root) == old_export  # byte for byte
@@ -181,7 +187,7 @@ def test_the_step_from_1_to_2_changes_no_hash_no_finding_no_baseline_and_no_byte
     assert record["files"]["before"] == {
         k: hashlib.sha256(v).hexdigest() for k, v in files.items() if is_managed(k)
     }
-    assert set(record["files"]["after"]) == set(record["files"]["before"]) | {
+    assert set(record["files"]["after"]) == set(record["files"]["before"]) - journal_files | {
         k for k, how in plan.files.items() if how == "new" and is_managed(k)
     }
     assert record["counts"]["before"] == plan.counts_before
@@ -252,7 +258,8 @@ def test_the_dry_run_prints_what_would_happen_and_writes_nothing(tmp_path: Path,
     files = folder_bytes(root)
     assert main(["migrate", str(root), "--dry-run"]) == 0
     out = capsys.readouterr().out
-    assert "changed  project.json" in out and "changed  journal.json" in out
+    assert "changed  project.json" in out and "removed  journal.json" in out
+    assert "new      journal.jsonl" in out
     assert "Model hash:" in out and "(equal)" in out and "identical" in out
     assert "devices: " in out and "harness wires: " in out
     assert "migrated from format 1" in out and "Nothing is lost" in out
@@ -262,7 +269,9 @@ def test_the_dry_run_prints_what_would_happen_and_writes_nothing(tmp_path: Path,
     assert list(doc) == list(SHAPES["migrate --dry-run"])
     assert doc["ok"] and doc["hash_equal"] and doc["exports_equal"] and doc["lost"] == []
     assert doc["model_hash_before"] == doc["model_hash_after"]
-    assert {f["file"] for f in doc["files"]} == {"project.json", "journal.json"}
+    assert {f["file"] for f in doc["files"]} - {".gitattributes"} == {
+        "project.json", "journal.json", "journal.jsonl",
+    }  # fmt: skip
     assert doc["counts_before"]["devices"] == doc["counts_after"]["devices"]
     assert folder_bytes(root) == files
 
@@ -656,4 +665,5 @@ def test_the_step_from_1_to_2_changes_nothing_in_a_random_project(
         assert done is not None and all(done.self_check.values())
         assert model_hash(load_project(root).project) == old_hash
         assert full_export(root) == old_export
-        assert ((root / "journal.json").exists()) is journal_on
+        assert ((root / "journal.jsonl").exists()) is journal_on
+        assert not (root / "journal.json").exists()
