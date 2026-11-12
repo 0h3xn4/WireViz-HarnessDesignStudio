@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest full release is 1.17.0 (2026-11-09; tag `v1.17.0` on commit `4c5a56c`, release workflow run 42616427035; not signed off by the owner). The release candidate 1.17.1rc2, the first signed release, was published as a pre-release on 2026-11-11 (tag `v1.17.1rc2` on commit `7fae805`, release workflow run 43067874134; not signed off by the owner); its packages have the same names as those below, with `1.17.1rc2` in place of `1.17.0`, and a `.sigstore.json` bundle each. The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). The releases up to 1.17.0 are not signed; the releases after 1.17.0 are signed and attested (see [Check the signature](#check-the-signature)).
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest full release is 1.17.1 (2026-11-11; tag `v1.17.1` on commit `cb72a3c`, release workflow run 43117202544; not signed off by the owner), the first full release with signed packages; each package has a `.sigstore.json` bundle beside it. Before it came the release candidate 1.17.1rc2, the first signed release, published as a pre-release on 2026-11-11 (tag `v1.17.1rc2` on commit `7fae805`, release workflow run 43067874134; not signed off by the owner), and the full release 1.17.0 (2026-11-09; tag `v1.17.0` on commit `4c5a56c`, release workflow run 42616427035). The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). The releases up to 1.17.0 are not signed; the releases after 1.17.0 are signed and attested (see [Check the signature](#check-the-signature)).
 
 ## Contents
 
@@ -43,31 +43,31 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.17.0 (tag `v1.17.0`, published 2026-11-09) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.17.1 (tag `v1.17.1`, published 2026-11-11) has these files attached, and a `.sigstore.json` bundle for each package and for `SHA256SUMS`; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.17.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.17.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.17.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.17.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio_1.17.1_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.17.1-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.17.1-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.17.1-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.17.0 and two macOS disk images that are not maintained any more (D-168); every release from 1.6.0 to 1.16.0 has the same four packages and `SHA256SUMS` as 1.17.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.17.1 and two macOS disk images that are not maintained any more (D-168); every release from 1.6.0 to 1.17.0 has the same four packages and `SHA256SUMS` as 1.17.1, without the Sigstore bundles, and 1.17.1rc2 has them with the bundles. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows)` on a branch `pkg/...` keeps the Windows packages as the artifact `harness-design-studio-windows-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.16.0). For 1.16.0 they are:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.17.1, and the release candidate 1.17.1rc2). For 1.17.1 they are:
 
 | File | SHA-256 |
 | --- | --- |
-| `harness-design-studio_1.17.0_amd64.deb` | `4c8150688549c59d34814d5b64b233f87c17f6e46247cd98b9511e06ec582197` |
-| `harness-design-studio-1.17.0-linux-x86_64.tar.gz` | `444ae6abeb35acdc0d040011cc47af475ce8cd0931b635e0d9ff9d4c96a3b04d` |
-| `harness-design-studio-1.17.0-windows-x86_64-setup.exe` | `a9ab1a7a498587d9f89ea72efa80c9ffb25814d4f15ad1fad1b7f7c9d46d9092` |
-| `harness-design-studio-1.17.0-windows-x86_64.zip` | `2d616cb7d5a68c1bc83f04ad64dde98277e261603f107a2e3e1f8aeeebcc9ab3` |
+| `harness-design-studio_1.17.1_amd64.deb` | `c0b22a1563bb633db58f4708fccabfa621a00650caa77dec2276d09fdf001ec2` |
+| `harness-design-studio-1.17.1-linux-x86_64.tar.gz` | `5d0162bb0d2856af274ba7b2dcd4c25f4401c0c1f55f13bf9ca4228571ba3950` |
+| `harness-design-studio-1.17.1-windows-x86_64-setup.exe` | `2143649f8b348feae261e7984b28e4e2dda093ad1dfb66a8a9f45a9171613371` |
+| `harness-design-studio-1.17.1-windows-x86_64.zip` | `6404d1a841596a490f8ba7121d225a4be6bde8954a0cfee8ce5e76582b4fe06e` |
 
 On Linux, put the package you downloaded and `SHA256SUMS` in one folder and run:
 
