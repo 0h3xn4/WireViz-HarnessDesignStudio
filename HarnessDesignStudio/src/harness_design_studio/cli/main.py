@@ -45,6 +45,11 @@ GITATTRIBUTES_JOURNAL = (
     "The journal is now journal.jsonl (one entry per line); .gitattributes says "
     "`journal.jsonl merge=union`, so Git keeps both sides' entries of a merge. Commit both files."
 )
+MIGRATED_EXPORT_AGAIN = (
+    "The outputs in outputs/ were written by version {old}: export them again once with this "
+    "version (`harness-design-studio export DIR`), because `verify --outputs` compares them with "
+    "the version that runs."
+)
 MIGRATED_CHECKED = (
     "Checked after the write: same model hash, same findings, baselines untouched, "
     "identical export."
@@ -183,6 +188,8 @@ def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
         rep.say(MIGRATED_CHECKED)
         if done.gitattributes in ("written", "updated", "added"):
             rep.say(GITATTRIBUTES_JOURNAL)
+        if done.outputs_version is not None:
+            rep.say(MIGRATED_EXPORT_AGAIN.format(old=done.outputs_version))
     rep.put(
         migrated=done is not None,
         from_version=done.from_version if done else None,
@@ -191,6 +198,7 @@ def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
         record=done.record if done else None,
         self_check=done.self_check if done else None,
         gitattributes=done.gitattributes if done else None,
+        outputs_version=done.outputs_version if done else None,
     )
     return rep.finish(0)
 

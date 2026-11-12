@@ -433,7 +433,7 @@ def load_from_files(
     elif version < SCHEMA_VERSION and migrate:
         files_for_build = migrate_raw(files, version)
         project.migrated_from = version
-        issues.append(Issue("info", "migrated", f"The project was in format {version} and was upgraded in memory to {SCHEMA_VERSION}. Nothing is changed on disk until you save.", "project.json"))  # fmt: skip
+        issues.append(Issue("info", "migrated", f"The project is in format {version}; this tool read it as format {SCHEMA_VERSION} in memory. Nothing was changed on disk. To edit it, upgrade it first: `harness-design-studio migrate DIR` (`--dry-run` shows what changes), or open it in the editor and choose Upgrade.", "project.json"))  # fmt: skip
     else:
         files_for_build = files
     if version == SCHEMA_VERSION and OLD_JOURNAL_FILE in files_for_build:
@@ -480,6 +480,13 @@ def non_canonical_files(root: Path | str, project: Project) -> list[str]:
     """Managed files whose bytes differ from what a save would write (hand-edited or merged)."""
     base = long_path(Path(root))
     expected = serialize(project, tool_version=project.meta.tool_version)
+    if project.migrated_from is not None:
+        # read from an older format, which only `migrate` or the editor's Upgrade writes anew
+        # (D-226): `project.json` is held against the tool's formatting with its own number, not
+        # against the number a save would write now (1.17.1's `check` said nothing either)
+        meta = json.loads(expected["project.json"])
+        meta["schema_version"] = project.migrated_from
+        expected["project.json"] = canonical.dumps(meta)
     out = []
     for rel, data in expected.items():
         path = base / rel

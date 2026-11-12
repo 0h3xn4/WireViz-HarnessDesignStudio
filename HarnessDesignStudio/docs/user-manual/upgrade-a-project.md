@@ -34,7 +34,7 @@ harness-design-studio generate wheel-link
 error: This project is in format 1, older than this tool writes (format 2), so nothing was saved. Upgrade it first: `harness-design-studio migrate DIR` (`--dry-run` shows what changes), or open it in the editor and choose Upgrade.
 ```
 
-The exit code is 2, and no file was changed. `validate`, `check`, `drc` and `export` read a format 1 project without upgrading it. A project that is already in format 2 needs nothing: `harness-design-studio migrate wheel-link` then says `Already up to date.`
+The exit code is 2, and no file was changed. The `error:` line goes to the error output and the other lines to the standard output: a terminal shows them in this order, but in a file or a log of the program (`> log.txt 2>&1`) the `error:` line can come first. `validate`, `check`, `drc` and `export` read a format 1 project without upgrading it; `validate` and `check` say so in the line `INFO    migrated: The project is in format 1; this tool read it as format 2 in memory. Nothing was changed on disk. To edit it, upgrade it first: …`. A project that is already in format 2 needs nothing: `harness-design-studio migrate wheel-link` then says `Already up to date.`
 
 ## 2. Upgrade in the editor
 
@@ -43,7 +43,7 @@ Open the project (**Open project…** on Home, or **File > Open project…**). T
 *This project is in format 1. Upgrade? A copy of the original stays in .migration-backup-v1. Older tools can no longer edit it.*
 
 - **Upgrade** upgrades the project, checks it and says *Upgraded from format 1 to 2. The original files are in .migration-backup-v1.*
-- **Open read-only** opens it without a change. A note says *This project is in format 1, so it is open read-only. Upgrade it to edit it.*
+- **Open read-only** opens it without a change. The banner above the diagram says *This project is in format 1, so it is open read-only. Upgrade it to edit it.* Its button **Upgrade…** asks the question again.
 - **Cancel** opens nothing.
 
 (GUI, not run: the question was checked against the program's texts and in the tests without a screen; nobody watched it on a display.)
@@ -93,6 +93,14 @@ Checked after the write: same model hash, same findings, baselines untouched, id
 The journal is now journal.jsonl (one entry per line); .gitattributes says `journal.jsonl merge=union`, so Git keeps both sides' entries of a merge. Commit both files.
 ```
 
+If the project has outputs in `outputs/` that an older version wrote, the command also says:
+
+```
+The outputs in outputs/ were written by version 1.17.1: export them again once with this version (`harness-design-studio export DIR`), because `verify --outputs` compares them with the version that runs.
+```
+
+The editor's message after **Upgrade** says the same in short. Export once, as in [section 4](#4-what-changed-in-the-folder).
+
 If the check after the write finds a difference, or the write fails, the command puts every file back from the backup, says so and exits with 1.
 
 ## 4. What changed in the folder
@@ -101,6 +109,20 @@ If the check after the write finds a difference, or the write fails, the command
 - `journal.json` is now `journal.jsonl`, one entry per line, with every entry as it was and one new entry *migrated from format 1*. A save only adds lines at the end, so the journal of two Git branches merges ([Use Git and CI](use-git-and-ci.md#the-change-journal-after-a-merge)).
 - `.gitattributes` has the line `journal.jsonl merge=union`, so Git keeps the lines that both sides of a merge added.
 - `.migration-backup-v1/` holds the original files and the record `MIGRATION.json` (the formats, the tool version, the SHA-256 of every file before and after, the model hash and the counts). Git ignores this folder and the `.bak` files (they are in the project's `.gitignore`). Keep the folder until you have looked at the upgraded project; then you can delete it.
+
+The upgrade does not touch the written outputs in `outputs/`. Export them once again with the new version:
+
+```
+harness-design-studio export wheel-link
+```
+
+Why: `outputs/system/provenance.json` names the version of the tool that wrote the outputs, and `harness-design-studio verify wheel-link --outputs` compares it with the version that runs. On the outputs of 1.17.1 it fails, before the upgrade and after it, with:
+
+```
+error: [out_provenance] system/provenance.json differs from the design: tool_version.
+```
+
+The design in them is the same; the new files name the new version. After the export, `verify --outputs` passes again.
 
 With Git, commit the result:
 
@@ -126,6 +148,18 @@ The exit code is 2. `validate`, `check` and `drc` still read it; `validate` says
 ```
 WARNING newer_version: This project was saved by a newer version of the tool (format 2; this tool understands up to 1). It is opened read-only. [project.json]
 ```
+
+1.17.1 does not read `journal.jsonl`, so its `journal` command does not see the change journal:
+
+```
+harness-design-studio journal wheel-link
+```
+
+```
+This project has no change journal. `harness-design-studio journal DIR --start` starts one.
+```
+
+Do not follow that advice: the journal is there, in `journal.jsonl`. `journal wheel-link --start` is refused anyway with `error: this project is read-only (saved by a newer tool version).` and exit code 2. Read the journal with 2.0.0rc1 or later.
 
 The older versions were not tried apart from 1.17.0 and 1.17.1.
 

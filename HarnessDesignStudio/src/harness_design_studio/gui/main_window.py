@@ -2805,6 +2805,11 @@ class MainWindow(QMainWindow):
     def _save_copy(self) -> None:
         self.save_as_flow()
 
+    def _upgrade_open(self) -> None:
+        """*Upgrade it to edit it*: the question of the opening again, for the project open now."""
+        if self.ctl.root is not None:
+            self.open_project(self.ctl.root, again=True)
+
     def _save_copy_noop(self) -> None:
         self.save_flow()
 
@@ -2812,8 +2817,10 @@ class MainWindow(QMainWindow):
         c = self.ctl
         if self._landing:  # nothing of the person's is open: the sample's notice waits
             self.banner.hide()
+        elif c.read_only and c.read_only_cause == "older":
+            self.banner.show_message(c.read_only_banner, strings.UPGRADE_ASK, self._upgrade_open)
         elif c.read_only:
-            self.banner.show_message(strings.BANNER_READ_ONLY, strings.SAVE_COPY, self._save_copy)
+            self.banner.show_message(c.read_only_banner, strings.SAVE_COPY, self._save_copy)
         elif c.project.recovered:
             self.banner.show_message(
                 strings.BANNER_RECOVERED, strings.SHOW_DETAILS, self.issues_flow
@@ -4948,8 +4955,9 @@ class MainWindow(QMainWindow):
         except OSError:
             return False
 
-    def open_project(self, folder: Path) -> bool:
-        if self._is_open_here(folder):
+    def open_project(self, folder: Path, *, again: bool = False) -> bool:
+        """`again=True`: the project open now (read-only, in an older format) is opened anew."""
+        if not again and self._is_open_here(folder):
             self.toasts.show_message(strings.ALREADY_OPEN, None)
             return True
         older = format_of(folder)
@@ -4986,13 +4994,20 @@ class MainWindow(QMainWindow):
         self._leave_landing()  # before the project's own layout is put back
         self._restore_project_layout()
         self._open_for_role()
-        if self.ctl.open_note:
+        if self.ctl.open_note and not (
+            self.ctl.read_only and self.ctl.open_note == self.ctl.read_only_banner
+        ):  # (the banner says it already, and stays)
             self.toasts.show_message(self.ctl.open_note, None, 10000)
         if self.ctl.upgraded is not None:
             done = self.ctl.upgraded
             self.toasts.show_message(
                 strings.UPGRADED.format(
                     old=done.from_version, new=done.to_version, backup=done.backup
+                )
+                + (
+                    strings.UPGRADED_EXPORT_AGAIN.format(old=done.outputs_version)
+                    if done.outputs_version
+                    else ""
                 ),
                 None,
                 10000,

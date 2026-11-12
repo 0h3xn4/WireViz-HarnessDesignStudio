@@ -531,6 +531,23 @@ class UpgradeResult:
     # what was done to `.gitattributes` for the journal (`mergefix.add_journal_union`): "" when the
     # project has no journal
     gitattributes: str = ""
+    # the version that wrote the outputs in `outputs/` when it is not this one: they are exported
+    # once more, because `verify --outputs` compares them with the version that runs; None: there
+    # are none, or this version wrote them
+    outputs_version: str | None = None
+
+
+def outputs_version(root: Path | str) -> str | None:
+    """The tool version named by `outputs/system/provenance.json` of the project when it is not
+    this one (None: no such file, unreadable, or this version)."""
+    from harness_design_studio.core.outputs.build import DEFAULT_FOLDER
+
+    path = long_path(Path(root)) / DEFAULT_FOLDER / "system" / "provenance.json"
+    try:
+        version = json.loads(path.read_text(encoding="utf-8")).get("tool_version")
+    except OSError, ValueError, AttributeError:
+        return None
+    return version if isinstance(version, str) and version != __version__ else None
 
 
 def _record(
@@ -767,7 +784,15 @@ def upgrade_project(
 
         attributes = add_journal_union(base)
     return UpgradeResult(
-        plan.from_version, plan.to_version, backup.name, record, written, plan, check, attributes
+        plan.from_version,
+        plan.to_version,
+        backup.name,
+        record,
+        written,
+        plan,
+        check,
+        attributes,
+        outputs_version(root),
     )
 
 
