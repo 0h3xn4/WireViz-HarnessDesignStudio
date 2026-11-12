@@ -124,6 +124,13 @@ The app's own wording:
 Read-only: this project was saved by a newer version of the tool, or is open in another window. You cannot change it here.
 ```
 
+This is the wording of version 1.17.1 and older and of 2.0.0rc1. Later versions name the one cause that applies:
+
+- *Read-only: this project was saved by a newer version of the tool. You cannot change it here.*
+- *Read-only: this project is open in another window. You cannot change it here.*
+- *Read-only: this project cannot be locked for editing here (a read-only folder or no permission). You cannot change it here.*
+- *This project is in format 1, so it is open read-only. Upgrade it to edit it.* with the button **Upgrade…**: the project was saved by 1.17.1 or older and you chose **Open read-only**. **Upgrade…** asks the question again ([Upgrade a project to format 2](user-manual/upgrade-a-project.md#2-upgrade-in-the-editor)).
+
 Nothing was changed. Three causes:
 
 1. **The project was saved by a newer tool.** On the command line the same project gives a warning on `validate` and refuses to change anything. This is what a project marked as format 99 printed (made by editing `project.json` for the test):

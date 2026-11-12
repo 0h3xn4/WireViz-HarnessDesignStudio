@@ -243,6 +243,9 @@ class EditorController(QObject):
         self._saved_revision = 0
         self._kept_fingerprint: str | None = None  # "Keep my version": the disk state we ignore
         self.open_note: str | None = None  # why the last open_path was not a normal open
+        # why the open project is read-only: "older" or "newer" format, "in_use" (open in another
+        # window) or "no_lock" (cannot be locked here); None: not said (`read_only_banner`)
+        self.read_only_cause: str | None = None
         self.upgraded: UpgradeResult | None = None  # what the last open_path upgraded, if it did
         self.journal_error_shown = False
         self._journal_worker: JournalWorker | None = None
@@ -1474,6 +1477,7 @@ class EditorController(QObject):
         self._schedule_drc()
 
     def open_sample(self) -> None:
+        self.read_only_cause = None
         self._install(mini3(), None, None, sample=True)
 
     def new_project(self, folder: Path, name: str) -> None:
@@ -1490,6 +1494,7 @@ class EditorController(QObject):
         except Exception:
             lock.release()
             raise
+        self.read_only_cause = None
         self._install(project, folder, lock)
 
     def open_path(
@@ -1497,11 +1502,14 @@ class EditorController(QObject):
     ) -> LoadResult:
         """Open a project folder. A project in an older file format is never upgraded without being
         asked (plan 2.3): `upgrade=True` is the answer *Upgrade* (backup, record, check, undo on
-        any difference: `core.io.upgrade`); otherwise it is open read-only."""
+        any difference: `core.io.upgrade`); otherwise it is open read-only. `read_only=True` is the
+        answer *Open read-only* of the upgrade question or of the window that says the project is
+        open in another window; `read_only_cause` keeps which reason applies, for the banner."""
         folder = Path(folder)
         lock: ProjectLock | None = None
         self.open_note = None
         self.upgraded = None
+        cause = "in_use" if read_only else None  # (an older format says so below)
         if not (folder / "project.json").is_file():
             load_project(folder)  # says in plain words why this is not a project; nothing is left
         if not read_only:  # behind: a lock file would be written into a folder that is no project
@@ -1509,7 +1517,7 @@ class EditorController(QObject):
             try:
                 lock.acquire()  # raises ProjectLockedError if open elsewhere
             except SaveError as exc:  # read-only media or no permission: reading is still possible
-                lock, read_only = None, True
+                lock, read_only, cause = None, True, "no_lock"
                 self.open_note = strings.OPEN_NO_LOCK.format(exc)
         try:
             if upgrade and not read_only:
@@ -1519,13 +1527,32 @@ class EditorController(QObject):
             if lock:
                 lock.release()
             raise
-        if result.project.migrated_from is not None and not read_only:
-            read_only = True  # an older format is only read until the person agrees to upgrade
-            self.open_note = strings.OPEN_OLD_FORMAT.format(old=result.project.migrated_from)
+        if result.project.read_only:
+            read_only, cause = True, "newer"  # (the loader reads a newer format read-only)
+        if result.project.migrated_from is not None:
+            # an older format is only read until the person agrees to upgrade; the note is also
+            # given when the answer was *Open read-only* (end-to-end test of 2.0.0rc1)
+            read_only, cause = True, "older"
+            self.open_note = self.open_note or strings.OPEN_OLD_FORMAT.format(
+                old=result.project.migrated_from
+            )
         if read_only:
             result.project.read_only = True
+        self.read_only_cause = cause if read_only else None  # (a reload or a restore keeps it)
         self._install(result.project, folder, lock)
         return result
+
+    @property
+    def read_only_banner(self) -> str:
+        """The words of the banner of a read-only project: the reason that applies."""
+        old = self.project.migrated_from
+        if self.read_only_cause == "older" and old is not None:
+            return strings.OPEN_OLD_FORMAT.format(old=old)
+        return {
+            "newer": strings.BANNER_READ_ONLY_NEWER,
+            "in_use": strings.BANNER_READ_ONLY_IN_USE,
+            "no_lock": strings.BANNER_READ_ONLY_NO_LOCK,
+        }.get(self.read_only_cause or "", strings.BANNER_READ_ONLY)
 
     def journal_available(self) -> bool:
         return (
@@ -1603,6 +1630,7 @@ class EditorController(QObject):
             self.stop_journal()
             clear_journal(self.root)
         self._lock, self.root, self.sample = lock, folder, False
+        self.read_only_cause = None
         self._after_save()
 
     def _after_save(self) -> None:
