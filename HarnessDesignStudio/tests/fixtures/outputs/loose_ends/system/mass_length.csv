@@ -1,5 +1,5 @@
-# harness-design-studio 2.0.0rc1 model a129963fff1b
-# harness-design-studio 2.0.0rc1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 2.0.0 model f85e86d6fd72
+# harness-design-studio 2.0.0. Provided as is, without warranty. Verify before use.
 Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data
 W001,18,18,60.1,0,456.4,45.64,502.04,yes,
 W002,26,22,86.7,0,465,46.5,511.5,yes,
