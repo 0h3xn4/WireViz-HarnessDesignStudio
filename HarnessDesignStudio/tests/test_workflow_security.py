@@ -70,6 +70,7 @@ def test_only_the_jobs_that_need_more_say_so() -> None:
         "harness-legal.yml": {
             "security-events: write  # the one job that uploads results to code scanning"
         },
+        "harness-tag.yml": {"contents: write  # push the tag; nothing else is written"},
     }
     for item in wide:
         name, _, what = item.partition(": ")
@@ -130,3 +131,36 @@ def test_every_test_a_workflow_names_exists(path: Path) -> None:
         if gone:
             missing.append(ident)
     assert not missing, missing
+
+
+def test_the_tag_workflow_tags_only_a_tested_commit_of_master_and_starts_the_release_on_the_tag() -> (
+    None
+):
+    """D-227: the workflow that makes a release tag checks the commit before it tags it, and starts
+    release.yml on the tag, so the signatures carry the identity `release.yml@refs/tags/v...`."""
+    text = (ROOT.parent / ".github" / "workflows" / "harness-tag.yml").read_text("utf-8")
+    on = text.split("\non:", 1)[1].split("\npermissions:", 1)[0]
+    assert "workflow_dispatch:" in on and "push:" not in on and "pull_request" not in on
+    steps = [
+        'git merge-base --is-ancestor "$COMMIT" origin/master',
+        'git ls-remote --exit-code --tags origin "refs/tags/v$VERSION"',
+        'python -S -m tools.release_notes check "v$VERSION"',
+        '"test (ubuntu-24.04)" "test (windows-latest)"',
+        'git tag -a "v$VERSION" "$COMMIT"',
+        'git push origin "refs/tags/v$VERSION"',
+        'gh workflow run release.yml --ref "v$VERSION" -f tag="v$VERSION"',
+    ]
+    found = [text.find(step) for step in steps]
+    assert all(at >= 0 for at in found), [s for s, at in zip(steps, found, strict=True) if at < 0]
+    assert found == sorted(found), "the checks must come before the tag, the tag before the release"
+    # the job names the workflow checks must exist in the test workflows
+    workflows = ROOT.parent / ".github" / "workflows"
+    for name, os_name in (
+        ("harness-ci.yml", "ubuntu-24.04"),
+        ("harness-platforms.yml", "windows-latest"),
+    ):
+        workflow = (workflows / name).read_text("utf-8")
+        assert re.search(r"^  test:\n", workflow, re.MULTILINE), name
+        assert f"os: [{os_name}]" in workflow, name
+    release = (workflows / "release.yml").read_text("utf-8")
+    assert "workflow_dispatch:" in release and "inputs.tag || github.ref_name" in release
