@@ -1,19 +1,22 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index"
-"""What the tests of the migration safety net (M1, plan 2.3) share: a fake format 2 that exists in
-the test and nowhere else, and the projects it is run over.
+"""What the tests of the migration safety net (M1, plan 2.3) share: a fake format that exists in the
+test and nowhere else, the real step from format 1 to 2, and the projects they are run over.
 
-The fake step is registered by the `fake_v2` fixture: it patches the format number of this tool to
-2 and adds a step 1 to 2 to `MIGRATIONS`, and takes both away again. The default step adds nothing
-(it only writes the new number); `lossy_step` drops a device and `changing_step` renames the project,
-so that the safety net's refusals have something to refuse. Nothing here is shipped.
+The fake step is registered by the `fake_next` fixture: it patches the format number of this tool to
+`FAKE_VERSION`, one ahead of the format it writes (`SCHEMA_VERSION`, 2 since D-226), adds a step to it
+to `MIGRATIONS`, and takes both away again. The default step adds nothing (it only writes the new
+number); `lossy_step` drops a placement and `changing_step` renames the project, so that the safety
+net's refusals have something to refuse. Nothing of the fake is shipped. `as_format(root, 1)` writes a
+project as a format 1 tool (1.17.x) wrote it, for the real step: format 2 is format 1 with another
+number (`tests/test_format2.py` holds that against a project written by 1.17.1).
 
-`SCENARIOS` is every project the step is run over: the fixtures and examples of the repository and
+`SCENARIOS` is every project the steps are run over: the fixtures and examples of the repository and
 projects built here to hold what a real one holds (released harnesses with baselines and a change
-log, a journal and overrides, connections and a harness made from one, as-built records). `python -m
-tests.migration_support --write-goldens` writes the hashes of all of them (`GOLDEN`); a test checks
-them against the hashes this tool computes: the hash of a format-1 project must never change.
+log, a journal and overrides, connections and a harness made from one, as-built records, loose ends).
+`python -m tests.migration_support --write-goldens` writes the hashes of all of them (`GOLDEN`); a test
+checks them against the hashes this tool computes: the hash of a format-1 project must never change.
 """
 
 import copy
@@ -27,21 +30,22 @@ from typing import Any
 import pytest
 
 from harness_design_studio.core.commands import History, apply_ops
-from harness_design_studio.core.io import loader, migrate, saver
+from harness_design_studio.core.io import canonical, loader, migrate, saver
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.model import SCHEMA_VERSION
 from harness_design_studio.resources import examples_path
 from tests.helpers import FIXTURES, copy_project
 
 GOLDEN = FIXTURES / "migration" / "hashes.json"
-FAKE_VERSION = 2
+FAKE_VERSION = SCHEMA_VERSION + 1  # a format that does not exist
 
 
 # ---- the fake step ---------------------------------------------------------------------------------
 
 
 def noop_step(files: dict[str, Any]) -> dict[str, Any]:
-    """Format 2 that changes nothing but the number."""
+    """A fake format that changes nothing but the number."""
     out = copy.deepcopy(files)
     out["project.json"]["schema_version"] = FAKE_VERSION
     return out
@@ -68,22 +72,26 @@ def install_fake_format(
     for module in (migrate, loader, saver):
         monkeypatch.setattr(module, "SCHEMA_VERSION", FAKE_VERSION)
     steps = dict(migrate.MIGRATIONS)
-    steps[1] = step
+    steps[SCHEMA_VERSION] = step
     monkeypatch.setattr(migrate, "MIGRATIONS", steps)
 
 
-def install_real_format_2(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Make this tool write format 2 with the REAL step 1 to 2 of `core/io/migrate.py` (M4, D-201),
-    not a fake one: only the format number is patched, to what the lead will set in the end."""
-    for module in (migrate, loader, saver):
-        monkeypatch.setattr(module, "SCHEMA_VERSION", FAKE_VERSION)
-
-
 @pytest.fixture
-def fake_v2(monkeypatch: pytest.MonkeyPatch) -> Callable[[], None]:
-    """Call it to make this tool write format 2 with the fake step. Call it after the project has
-    been built: a save made while the fake is on writes format 2."""
+def fake_next(monkeypatch: pytest.MonkeyPatch) -> Callable[[], None]:
+    """Call it to make this tool write the fake format with the fake step. Call it after the project
+    has been built: a save made while the fake is on writes the fake format."""
     return lambda: install_fake_format(monkeypatch)
+
+
+def as_format(root: Path, version: int) -> Path:
+    """Write the number of `project.json` as `version`, in the bytes the tool writes (canonical
+    JSON). With 1 it is the project as a version 1.17.x tool wrote it: the step from 1 to 2 writes
+    the number and nothing else (D-226)."""
+    f = root / "project.json"
+    doc = json.loads(f.read_bytes())
+    doc["schema_version"] = version
+    f.write_bytes(canonical.dumps(doc))
+    return root
 
 
 # ---- the projects ----------------------------------------------------------------------------------
@@ -234,6 +242,7 @@ SCENARIOS: dict[str, Callable[[Path], Path]] = {
     "fixture-sat15": _copy(FIXTURES / "projects" / "sat15"),
     "custom_device": _copy(FIXTURES / "projects" / "custom_device"),
     "m1_project": _copy(FIXTURES / "m1_project"),
+    "v1_project": _copy(FIXTURES / "v1_project"),
     "example-first-steps": _example("first-steps"),
     "example-minimal-satellite": _example("minimal-satellite"),
     "example-small-satellite": _example("small-satellite"),

@@ -25,6 +25,14 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-11: projects are saved in format 2 (no result moves; the stored hashes are not written again)
+
+- **Before.** `project.json` said `"schema_version": 1`.
+- **Now.** It says `"schema_version": 2` (decision D-226). A format 1 project is upgraded by `migrate` or by the editor's question, and nothing else in its files changes.
+- **What moves.** No number, finding or written file. The model hash reads the number as 1 (D-202), so the 12-character stamp stays; no written file holds the format number (`tests/test_format2.py`). `tools.output_hashes --check` and `tools.numbers_snapshot --check` print *identical*, so neither stored file is written again. The JSON Schema of `project.json` that `harness-design-studio schema` writes gives `schema_version` the default 2.
+- **Why.** Format 2 is the format that may hold a loose cable end; a 1.x tool opens it read-only (plan 2.0, M4).
+- **Agreed.** The owner chose the format change with a migration (D-200 (1), 2026-11-05) and asked for the format-2 bump on 2026-11-11.
+
 ### 2026-11-11: version 1.17.1, a shorter version string (the stored hashes are written again; nothing else changes)
 
 - **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with `1.17.1rc2` (`BASE_VERSION` 1.17.1rc2).

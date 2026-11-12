@@ -20,7 +20,7 @@ from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
-from harness_design_studio.core.model import Part, Wire, evolve
+from harness_design_studio.core.model import SCHEMA_VERSION, Part, Wire, evolve
 from harness_design_studio.core.samples import sat15
 from harness_design_studio.core.wires import (
     LEGACY_REASON,
@@ -309,7 +309,7 @@ def test_a_project_with_locked_wires_and_no_reasons_opens_and_saves_byte_for_byt
     assert any(w.locked for h in loaded.harnesses.values() for w in h.wires)
     save_project(loaded, folder)
     assert folder_bytes(folder) == before
-    assert json.loads(before["project.json"])["schema_version"] == 1  # no migration is needed
+    assert json.loads(before["project.json"])["schema_version"] == SCHEMA_VERSION  # no new format
 
 
 def test_a_locked_wire_with_no_reason_is_still_kept_whole_by_generation(project):

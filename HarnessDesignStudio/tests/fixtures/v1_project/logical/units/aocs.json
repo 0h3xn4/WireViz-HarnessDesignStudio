@@ -1,0 +1,13 @@
+{
+  "units": [
+    {
+      "id": "RW1",
+      "mass_relevant": true,
+      "name": "Reaction wheel 1",
+      "notes": "",
+      "side": "nominal",
+      "subsystem": "aocs",
+      "zone": "panel-B"
+    }
+  ]
+}

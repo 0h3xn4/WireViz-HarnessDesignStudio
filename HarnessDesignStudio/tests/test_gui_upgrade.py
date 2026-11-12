@@ -3,8 +3,10 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-MIGRATE-03. No silent upgrade in the editor (plan 2.3, point 5): a project in an older file
 format is not upgraded, not even in memory for editing, until the person says so. The question is
-asked once, on opening, with *Upgrade*, *Open read-only* and *Cancel*; the format used here is the
-fake one of `tests/migration_support.py` (the shipped tool has only one format)."""
+asked once, on opening, with *Upgrade*, *Open read-only* and *Cancel*. The format used here is the
+real one: this tool writes format 2 (D-226) and the projects are written in format 1 the way a 1.17.x
+tool wrote them (`tests/migration_support.as_format`), or are the project that 1.17.1 wrote
+(`tests/fixtures/v1_project`, with a loose cable end)."""
 
 import json
 from pathlib import Path
@@ -20,12 +22,13 @@ from harness_design_studio.core.io import upgrade  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.dialogs import UpgradeDialog  # noqa: E402
 from tests.gui_helpers import make_window  # noqa: E402
+from tests.helpers import FIXTURES, copy_project  # noqa: E402
 from tests.migration_support import (  # noqa: E402
+    as_format,
     build,
     folder_bytes,
     install_fake_format,
 )
-from tests.migration_support import fake_v2 as fake_v2  # noqa: E402,F401  (a fixture)
 
 
 @pytest.fixture
@@ -35,10 +38,8 @@ def win(qtbot, tmp_path):
     return w
 
 
-def old_project(tmp_path: Path, fake_v2) -> Path:
-    root = build("sat15", tmp_path / "old")
-    fake_v2()  # (this tool now writes format 2 and the project is in format 1)
-    return root
+def old_project(tmp_path: Path) -> Path:
+    return as_format(build("sat15", tmp_path / "old"), 1)  # (this tool writes format 2)
 
 
 def answers(win, *replies: str) -> list[tuple[int, int]]:
@@ -53,8 +54,8 @@ def answers(win, *replies: str) -> list[tuple[int, int]]:
     return asked
 
 
-def test_upgrade_is_asked_once_and_does_the_upgrade(win, tmp_path: Path, fake_v2) -> None:
-    root = old_project(tmp_path, fake_v2)
+def test_upgrade_is_asked_once_and_does_the_upgrade(win, tmp_path: Path) -> None:
+    root = old_project(tmp_path)
     original = {k: v for k, v in folder_bytes(root).items() if k.endswith(".json")}
     asked = answers(win, "upgrade")
     assert win.open_project(root)
@@ -69,8 +70,8 @@ def test_upgrade_is_asked_once_and_does_the_upgrade(win, tmp_path: Path, fake_v2
     win.ctl.release()
 
 
-def test_open_read_only_changes_nothing_on_disk(win, tmp_path: Path, fake_v2) -> None:
-    root = old_project(tmp_path, fake_v2)
+def test_open_read_only_changes_nothing_on_disk(win, tmp_path: Path) -> None:
+    root = old_project(tmp_path)
     files = folder_bytes(root)
     asked = answers(win, "read_only")
     assert win.open_project(root)
@@ -80,8 +81,8 @@ def test_open_read_only_changes_nothing_on_disk(win, tmp_path: Path, fake_v2) ->
     win.ctl.release()
 
 
-def test_cancel_opens_nothing_and_changes_nothing(win, tmp_path: Path, fake_v2) -> None:
-    root = old_project(tmp_path, fake_v2)
+def test_cancel_opens_nothing_and_changes_nothing(win, tmp_path: Path) -> None:
+    root = old_project(tmp_path)
     files = folder_bytes(root)
     answers(win, "cancel")
     assert win.open_project(root) is False
@@ -98,11 +99,11 @@ def test_a_current_project_is_not_asked_about(win, tmp_path: Path) -> None:
 
 
 def test_the_controller_never_opens_an_old_format_for_editing_without_the_answer(
-    tmp_path: Path, fake_v2, qtbot
+    tmp_path: Path, qtbot
 ) -> None:
     from harness_design_studio.gui.controller import EditorController
 
-    root = old_project(tmp_path, fake_v2)
+    root = old_project(tmp_path)
     files = {k: v for k, v in folder_bytes(root).items() if k.endswith(".json")}
     ctl = EditorController(drc_delay_ms=600_000)
     ctl.open_path(root)  # (no `upgrade=True`)
@@ -113,9 +114,9 @@ def test_the_controller_never_opens_an_old_format_for_editing_without_the_answer
 
 
 def test_a_failed_upgrade_says_so_and_leaves_the_project_as_it_was(
-    win, tmp_path: Path, fake_v2, monkeypatch
+    win, tmp_path: Path, monkeypatch
 ) -> None:
-    root = old_project(tmp_path, fake_v2)
+    root = old_project(tmp_path)
     files = {k: v for k, v in folder_bytes(root).items() if k.endswith(".json")}
     monkeypatch.setattr(
         upgrade, "self_check", lambda *a, **k: ({"exports": False}, ["A full export differs."])
@@ -164,5 +165,31 @@ def test_the_fake_format_helper_leaves_the_real_format_alone(tmp_path: Path, mon
     before = migrate.current_version()
     with monkeypatch.context() as m:
         install_fake_format(m)
-        assert migrate.current_version() == 2
-    assert migrate.current_version() == before == 1
+        assert migrate.current_version() == 3
+    assert migrate.current_version() == before == 2
+
+
+def test_the_project_of_1_17_1_with_a_loose_end_is_upgraded_and_edited(win, tmp_path: Path) -> None:
+    """The journey of a person who opens a project made with 1.17.1 (format 1, a cable drawn by hand
+    with a loose end): asked once, upgraded, the loose end and its place are there, it is saved in
+    format 2 and opened again without a question."""
+    from harness_design_studio.core.io.layout import model_hash
+    from harness_design_studio.core.manual_harness import loose_ends
+
+    root = copy_project(FIXTURES / "v1_project", tmp_path / "p")
+    asked = answers(win, "upgrade")
+    assert win.open_project(root)
+    assert asked == [(1, 2)] and not win.ctl.read_only
+    p = win.ctl.project
+    assert p.meta.schema_version == 2 and p.migrated_from is None
+    assert [c.id for c in loose_ends(p.harnesses["W002"])] == ["W002-P2"]
+    assert "pos:W002-P2" in p.diagram_marks
+    before = model_hash(p)
+    assert (root / ".migration-backup-v1" / "MIGRATION.json").is_file()
+    win.ctl.save()
+    assert json.loads((root / "project.json").read_text())["schema_version"] == 2
+    win.ctl.release()
+    again = answers(win)  # no reply ready: asking again would fail
+    assert win.open_project(root) and again == []
+    assert model_hash(win.ctl.project) == before
+    win.ctl.release()

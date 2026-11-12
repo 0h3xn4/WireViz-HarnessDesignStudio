@@ -1,0 +1,13 @@
+{
+  "units": [
+    {
+      "id": "OBC",
+      "mass_relevant": true,
+      "name": "On-board computer",
+      "notes": "",
+      "side": "nominal",
+      "subsystem": "avionics",
+      "zone": "panel-A"
+    }
+  ]
+}

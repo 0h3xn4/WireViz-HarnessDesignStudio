@@ -18,7 +18,7 @@ from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
 from .review import Baseline, ChangeEntry, DiagramMark, Placement, Waiver
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2  # format 2 since D-226 (format 1 plus the number; frozen at the 2.0.0 tag)
 DEFAULT_ZONES = ("panel-A", "panel-B")
 
 

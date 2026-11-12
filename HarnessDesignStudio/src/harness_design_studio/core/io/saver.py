@@ -46,13 +46,25 @@ def save_project(
     *,
     expected_fingerprint: str | None = None,
     allow_inconsistent: bool = False,
+    upgrade: bool = False,
 ) -> SaveResult:
-    """Write the project. Raises `SaveError` on any problem; written files are always whole."""
+    """Write the project. Raises `SaveError` on any problem; written files are always whole.
+
+    A project read from an older format (`migrated_from`) is written over its own folder only by an
+    upgrade (`upgrade=True`: `core.io.upgrade`, with its backup, record, journal entry and check);
+    any other save of it there is refused (D-226: no silent upgrade). A new folder may take it."""
     root = Path(root)
     base = long_path(root)
     exists = (base / "project.json").is_file()
     if project.read_only:
         raise SaveError("This project was saved by a newer version of the tool and is read-only.")
+    if exists and project.migrated_from is not None and not upgrade:
+        raise SaveError(
+            f"This project is in format {project.migrated_from}, older than this tool writes "
+            f"(format {SCHEMA_VERSION}), so nothing was saved. Upgrade it first: "
+            "`harness-design-studio migrate DIR` (`--dry-run` shows what changes), or open it in "
+            "the editor and choose Upgrade."
+        )
     if project.recovered and exists:
         raise SaveError(
             "Parts of this project could not be loaded, so saving over the original folder is "
@@ -219,5 +231,5 @@ def migrate_project(root: Path | str) -> LoadResult | None:
             "The project has errors and was not migrated. "
             "Run `harness-design-studio validate` first."
         )
-    save_project(result.project, root)
+    save_project(result.project, root, upgrade=True)
     return result
