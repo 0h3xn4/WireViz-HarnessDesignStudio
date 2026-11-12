@@ -58,6 +58,7 @@ That is the whole idea. The full tutorial with the output of every command is [`
 | --- | --- |
 | do a task (a quick block diagram, draw, generate, edit a wire, import, devices, export, release, Git, CI) | [`docs/user-manual/`](docs/user-manual/README.md): one page per task, and [`docs/user-manual/quick-diagram.md`](docs/user-manual/quick-diagram.md) for a picture in five minutes |
 | look something up | [`docs/CLI.md`](docs/CLI.md), the user guide ([`docs/guide/USER_GUIDE.md`](docs/guide/USER_GUIDE.md), **F1** in the app), [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md), [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
+| upgrade a project saved by 1.17.1 or older to format 2 (since 2.0.0rc1) | [`docs/user-manual/upgrade-a-project.md`](docs/user-manual/upgrade-a-project.md) |
 | fix a problem | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md), [`docs/FAQ.md`](docs/FAQ.md) |
 | see what each step uses and makes, or record what was built and measured | [`docs/user-manual/follow-the-workflow.md`](docs/user-manual/follow-the-workflow.md), [`docs/user-manual/record-what-was-built.md`](docs/user-manual/record-what-was-built.md), [`docs/models/asbuilt.md`](docs/models/asbuilt.md) |
 | supply engineering values or review | [`docs/CONFIG.md`](docs/CONFIG.md), [`docs/PLACEHOLDERS.md`](docs/PLACEHOLDERS.md), [`docs/RULES.md`](docs/RULES.md), [`docs/OUTPUTS.md`](docs/OUTPUTS.md) |

@@ -1,4 +1,4 @@
-THIRD-PARTY NOTICES: Harness Design Studio 1.17.1 (linux package)
+THIRD-PARTY NOTICES: Harness Design Studio 2.0.0rc1 (linux package)
 ========================================================================
 
 Harness Design Studio is licensed under the GNU General Public Licence, version 3 only (GPL-3.0-only). The full text is in the file LICENSE. This file lists the components of other authors that this package contains: name, version, licence, copyright notice and the licence text. The notices were made from the built package (tools/third_party.py).

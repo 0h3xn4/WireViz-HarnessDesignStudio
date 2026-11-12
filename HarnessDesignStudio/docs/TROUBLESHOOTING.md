@@ -60,11 +60,11 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints the version, for example `harness 1.17.0`.
+Check with `harness-design-studio --version`; it prints the version, for example `harness 2.0.0rc1`.
 
 ### I am on Windows or a Mac
 
-Version 1.17.0 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
+Version 2.0.0rc1 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
 
 ### `E: Unable to locate package ./harness-design-studio_...` or `dpkg: dependency problems`
 
@@ -158,7 +158,7 @@ A command that saves (`generate`, an import, `override`, `release` and the other
 error: This project is in format 1, older than this tool writes (format 2), so nothing was saved. Upgrade it first: `harness-design-studio migrate DIR` (`--dry-run` shows what changes), or open it in the editor and choose Upgrade.
 ```
 
-The exit code is 2 and no file is changed. **Fix:** look first with `harness-design-studio migrate DIR --dry-run`, then run `harness-design-studio migrate DIR`; it keeps the original files in `.migration-backup-v1/` and checks itself ([Use Git and CI](user-manual/use-git-and-ci.md#other-helpers)). The upgrade changes the number in `project.json` and nothing else: the model hash and every written file stay the same. After it, a 1.x tool opens the project read-only. `validate`, `check`, `drc` and `export` read a format 1 project without upgrading it.
+The exit code is 2 and no file is changed. **Fix:** look first with `harness-design-studio migrate DIR --dry-run`, then run `harness-design-studio migrate DIR`; it keeps the original files in `.migration-backup-v1/` and checks itself ([Use Git and CI](user-manual/use-git-and-ci.md#other-helpers)). The upgrade changes the number in `project.json` and nothing else: the model hash and every written file stay the same. After it, a 1.x tool opens the project read-only. `validate`, `check`, `drc` and `export` read a format 1 project without upgrading it. The whole procedure, with the output to expect: [Upgrade a project to format 2](user-manual/upgrade-a-project.md).
 
 ### "Project already open" / "This project is already open in another instance of the tool"
 
