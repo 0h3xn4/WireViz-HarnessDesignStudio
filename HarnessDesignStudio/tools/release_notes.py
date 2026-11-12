@@ -123,7 +123,7 @@ PACKAGES: tuple[Package, ...] = (
         (
             "**Windows:** run `harness-design-studio-{v}-windows-x86_64-setup.exe`. It installs "
             "for your user (no administrator rights) and adds a Start menu entry and the "
-            "commands `harness-design-studio` and `harness-design-studio-gui`. The package is "
+            "commands `harness-design-studio` and `harness-design-studio-gui`. The package "
             'has no Windows code-signing certificate, so Windows SmartScreen shows "Windows '
             'protected your PC": choose **More info**, then **Run anyway**.',
         ),
