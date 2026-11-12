@@ -256,10 +256,13 @@ def test_entries_can_only_be_added_at_the_end(folder, clock):
 
 
 def tamper(folder: Path, fn) -> None:
-    path = folder / "journal.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    fn(data["journal"])
-    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    """Change the lines of `journal.jsonl` (one entry per line, M7a) by hand."""
+    path = folder / "journal.jsonl"
+    entries = [json.loads(line) for line in path.read_bytes().splitlines()]
+    fn(entries)
+    path.write_text(
+        "".join(json.dumps(e, sort_keys=True) + "\n" for e in entries), encoding="utf-8"
+    )
 
 
 def two_entries(folder):
@@ -282,7 +285,7 @@ def test_a_changed_entry_makes_validate_report_a_damaged_journal(folder, clock, 
     tamper(folder, lambda entries: entries[1].update(new=0.95))
     assert main(["validate", str(folder)]) == 1
     out = capsys.readouterr().out
-    assert "journal_damaged" in out and "entry 2 was changed" in out
+    assert "journal_damaged" in out and "the entry on line 2 was changed" in out
     result = load_project(folder)
     assert result.project.journal is None and result.project.recovered
     with pytest.raises(SaveError):
@@ -299,9 +302,9 @@ def test_a_removed_entry_makes_validate_report_a_damaged_journal(folder, clock, 
 def test_an_entry_put_in_makes_validate_report_a_damaged_journal(folder, clock, capsys):
     two_entries(folder)
 
-    def put_in(entries):
+    def put_in(entries):  # a copy of an entry with another reason (a copy as it is is read once)
         extra = dict(entries[1])
-        extra["seq"] = 2
+        extra["reason"] = "put in"
         entries.insert(1, extra)
 
     tamper(folder, put_in)
@@ -310,7 +313,7 @@ def test_an_entry_put_in_makes_validate_report_a_damaged_journal(folder, clock, 
 
 
 def test_a_journal_that_is_not_a_list_of_entries_is_damaged(folder, clock):
-    (folder / "journal.json").write_text('{"journal": 5}\n', encoding="utf-8")
+    (folder / "journal.jsonl").write_text("5\n", encoding="utf-8")
     result = load_project(folder)
     assert any(i.code == "journal_damaged" for i in result.issues) and result.has_errors
 
@@ -328,9 +331,9 @@ def test_the_journal_is_not_part_of_the_model_hash_or_the_outputs(folder, clock)
     p = load_project(folder).project
     with_journal = model_hash(p)
     outputs = build_outputs(p, drawings=False).files
-    assert "journal.json" in serialize(p)
+    assert "journal.jsonl" in serialize(p)
     p.journal = None
-    assert "journal.json" not in serialize(p)
+    assert "journal.jsonl" not in serialize(p)
     assert model_hash(p) == with_journal
     assert build_outputs(p, drawings=False).files == outputs
     assert not any("journal" in name for name in outputs)
@@ -353,8 +356,8 @@ def test_the_same_design_saved_at_another_time_by_another_person_has_the_same_de
         }
 
     ta, tb = tree(a), tree(b)
-    assert ta.pop("journal.json") != tb.pop("journal.json")
-    assert ta == tb
+    assert (a / "journal.jsonl").read_bytes() != (b / "journal.jsonl").read_bytes()
+    assert "journal.jsonl" not in ta and ta == tb
     for data in ta.values():
         assert b"Ann" not in data and b"2026-11" not in data
 
@@ -379,7 +382,7 @@ def test_a_project_without_a_journal_is_unchanged_byte_for_byte_after_open_and_s
     folder = tmp_path / "p"
     templates.create_project(folder, template)
     before = tree_bytes(folder)
-    assert "journal.json" not in before
+    assert "journal.jsonl" not in before
     p = load_project(folder).project
     assert p.journal is None
     save_project(p, folder)
@@ -389,21 +392,21 @@ def test_a_project_without_a_journal_is_unchanged_byte_for_byte_after_open_and_s
         "x", [SetConfig(configcheck.with_value(p.config["derating"], "bundle_derating", 0.4))]
     )
     save_project(p, folder)
-    assert "journal.json" not in tree_bytes(folder)
+    assert "journal.jsonl" not in tree_bytes(folder)
 
 
 def test_create_project_makes_a_journal_only_when_asked(tmp_path):
     templates.create_project(tmp_path / "a", "flatsat")
     templates.create_project(tmp_path / "b", "flatsat", journal=True)
-    assert not (tmp_path / "a" / "journal.json").exists()
-    assert (tmp_path / "b" / "journal.json").is_file()
+    assert not (tmp_path / "a" / "journal.jsonl").exists()
+    assert (tmp_path / "b" / "journal.jsonl").is_file()
 
 
 def test_the_new_command_starts_a_journal_unless_told_not_to(tmp_path, clock, capsys):
     assert main(["new", str(tmp_path / "a"), "--template", "first-steps"]) == 0
     assert main(["new", str(tmp_path / "b"), "--template", "first-steps", "--no-journal"]) == 0
-    assert (tmp_path / "a" / "journal.json").is_file()
-    assert not (tmp_path / "b" / "journal.json").exists()
+    assert (tmp_path / "a" / "journal.jsonl").is_file()
+    assert not (tmp_path / "b" / "journal.jsonl").exists()
     assert load_project(tmp_path / "a").project.journal[0].kind == "start"
     assert main(["validate", str(tmp_path / "a")]) == 0
 
@@ -417,8 +420,8 @@ def test_journal_start_begins_a_journal_for_an_existing_project(tmp_path, clock,
     assert tree_bytes(folder) == before
     assert main(["journal", str(folder), "--start"]) == 0
     after = tree_bytes(folder)
-    assert set(after) - set(before) == {"journal.json"}
-    assert {k: v for k, v in after.items() if k != "journal.json"} == before
+    assert set(after) - set(before) == {"journal.jsonl"}
+    assert {k: v for k, v in after.items() if k != "journal.jsonl"} == before
     assert main(["journal", str(folder), "--start"]) == 0
     assert "has a journal already" in capsys.readouterr().out
     assert len(load_project(folder).project.journal) == 1

@@ -86,6 +86,7 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "log": ("ok", "harness", "entries"),
     "migrate": (
         "ok", "migrated", "from_version", "to_version", "backup", "record", "self_check",
+        "gitattributes",
     ),
     "migrate --dry-run": (
         "ok", "dry_run", "up_to_date", "from_version", "to_version", "files", "counts_before",

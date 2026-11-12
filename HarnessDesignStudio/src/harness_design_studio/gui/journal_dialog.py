@@ -4,7 +4,7 @@
 
     JournalDialog(parent, theme, project, start_journal=...).exec()
 
-One row for each entry of `journal.json`: number, time (UTC), author, what kind of change, the
+One row for each entry of the journal (`journal.jsonl`): number, time (UTC), author, what kind of change, the
 object and field, the value before and after, and the reason where the model holds one. The filter
 box keeps the rows that contain the text you type in any column. A project that has no journal says
 so and offers to start one. Opened from **Help > Change history**. Nothing here changes an entry;
@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import journal
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.model.journal import shown_kind
 from harness_design_studio.core.units import gauge_short
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.dialog_base import Dialog
@@ -116,7 +117,17 @@ class JournalDialog(Dialog):
         self.table.setRowCount(len(entries))
         for r, e in enumerate(entries):
             for c, value in enumerate(
-                (e.seq, e.when, e.author, e.kind, e.object, e.field, e.old, e.new, e.reason)
+                (
+                    e.seq,
+                    e.when,
+                    e.author,
+                    shown_kind(e.kind),
+                    e.object,
+                    e.field,
+                    e.old,
+                    e.new,
+                    e.reason,
+                )
             ):
                 if c in (6, 7) and e.field == "gauge_awg" and _is_gauge(value):
                     value = gauge_short(value)  # the cross-section beside a gauge, on screen only

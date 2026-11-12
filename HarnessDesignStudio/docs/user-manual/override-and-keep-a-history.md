@@ -86,7 +86,7 @@ A deviation does **not** meet the requirement; it records that a person accepted
 
 ## 6. Keep a history
 
-A project has a change journal if and only if it has the file `journal.json`.
+A project has a change journal if and only if it has the file `journal.jsonl` (one entry per line; a project of format 1 has `journal.json`, which the upgrade moves).
 
 - `harness-design-studio new` and **New project** in the editor start one (`new --no-journal` does not).
 - For an existing project: `harness-design-studio journal wheel-link --start`, or **Help > Change history… > Start a journal**.
@@ -110,20 +110,20 @@ With `--json`, `journal`, `override` and `deviation` print one document each (th
 
 What is recorded: a change of any design input (devices, interfaces, connectors, links, harness fields, wire fields, library parts), a configuration value, an override (with its reason), a waiver or a deviation (with its justification), the approval of a part, a review, a release or a new revision (with the comment), and a generation. Not recorded: the positions of devices on the diagram.
 
-The journal is **append-only**. An entry cannot be changed or removed; each entry carries a chain value made from the one before it, so a changed, removed or inserted entry makes `validate` report *the change journal is damaged* (exit 1), and the editor will not save over it. Cutting off the last entries is not detectable from the file; keep the project in Git (see [use Git and CI](use-git-and-ci.md)) for that.
+The journal is **append-only**. An entry cannot be changed or removed; each entry carries a chain value made from the entry before it on its own branch, so a changed, removed or inserted entry makes `validate` report *the change journal is damaged* (exit 1), and the editor will not save over it. The entries are shown by time, then author; a kind of entry this version does not know (from a later version) is shown as `other`. Cutting off the last entries is not detectable from the file; keep the project in Git (see [use Git and CI](use-git-and-ci.md)) for that.
 
 ## 8. What the journal is not
 
 - It is **not** part of the model hash, the baseline or any written output.
 - It is **not** a proof of who typed: the name is the one the computer, Git or `--author` gave. A project that must tie a name to a person needs the roles of [release a harness](release-a-harness.md) and the history of Git.
-- It is **not** a merge of two people's work. `journal.json` belongs to one working copy. When two people append to it on different Git branches, Git reports a conflict in the file; keep one side's file (the chain only holds for one line of entries). The changes that arrive from the other branch are in the design files and in Git's history, and the journal does not record them again, because it compares a save with what was on disk. Decide in the team who keeps the journal of record.
+- It is **not** a record of what a merge brought in. When two people add entries on different Git branches, Git keeps both sides' lines (`journal.jsonl merge=union` in `.gitattributes`) and both stay valid; `harness-design-studio merge-fix` then adds one `merge` entry that names the last entry of each branch ([the journal after a merge](use-git-and-ci.md#the-change-journal-after-a-merge)). The changes that arrive from the other branch are in that branch's entries and in Git's history; the merge itself makes no entry for each of them.
 - It is **not** an approval. A release still needs its own steps.
 
 ## Common mistakes
 
 - **Typing a reason that says nothing.** The tool refuses an empty reason; it cannot refuse an empty sentence. A review will read it.
 - **Expecting a cleared override to change the wire at once.** `--clear` removes the override and the value; **Generate** gives the design's value.
-- **Editing `journal.json` by hand.** It is read as a record: a change makes it damaged. Fix a wrong entry by a new change, not by editing.
+- **Editing `journal.jsonl` by hand.** It is read as a record: a change makes it damaged. Fix a wrong entry by a new change, not by editing.
 - **Starting the journal late.** The history starts at the first save after it exists; earlier changes are only in Git, if you used it.
 
 Next: [edit a wire](edit-a-wire.md), [read and fix problems](read-and-fix-problems.md), [release a harness](release-a-harness.md), [see what the tool assumes](see-what-the-tool-assumes.md)

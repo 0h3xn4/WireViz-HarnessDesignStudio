@@ -116,7 +116,7 @@ def test_deviations_through_the_interface(folder):
 
 def test_the_interface_starts_a_journal_when_asked(tmp_path):
     api.create_project(tmp_path / "a", "first-steps", journal=False)
-    assert not (tmp_path / "a" / "journal.json").exists()
+    assert not (tmp_path / "a" / "journal.jsonl").exists()
     assert api.get_journal(tmp_path / "a").has_journal is False
     assert api.start_journal(tmp_path / "a", author="Di") is True
     assert api.start_journal(tmp_path / "a") is False
@@ -143,7 +143,7 @@ def test_an_import_is_a_journal_entry_and_the_record_is_not_in_the_hash(tmp_path
     project.import_records.update(kept)
     assert layout.model_hash(project) == without
     assert before != without  # the lengths themselves are part of the design
-    # journal.json is out of the hash and so is imports/records.json: the bytes of the file system say so
+    # journal.jsonl is out of the hash and so is imports/records.json: the bytes of the file system say so
     assert journal.files_hash(layout.serialize(project, tool_version="")) == without
     save_project(project, dest)
     assert (dest / "imports" / "records.json").is_file()
@@ -219,7 +219,7 @@ def test_a_gauge_override_shows_its_cross_section_on_the_screen_only(folder):
     assert "gauge_awg 24 (0.205 mm²): supplier stock" in tip and word
     shown = render(next(d for d in explain_wire(project, wid) if d.id == "wire-override"))
     assert "24 AWG (0.205 mm²)" in shown
-    written = (folder / "journal.json").read_text(encoding="utf-8")
+    written = (folder / "journal.jsonl").read_text(encoding="utf-8")
     assert "mm²" not in written
 
 
@@ -230,6 +230,7 @@ def test_the_journal_records_the_extension_files_and_the_hash_ignores_them(folde
     from harness_design_studio.core.io.layout import outside_the_hash
 
     for rel in (
+        "journal.jsonl",
         "journal.json",
         "imports/records.json",
         "extensions/enabled.json",

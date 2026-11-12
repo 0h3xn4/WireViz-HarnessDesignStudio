@@ -606,7 +606,7 @@ def template_infos() -> list[TemplateInfo]:
 # ---- the change journal, overrides and deviations (S4) -------------------------------------------
 #
 # Unlike the records above, a journal record holds a time and a name: they are in the project's
-# `journal.json`, so the same project still gives the same record.
+# `journal.jsonl`, so the same project still gives the same record.
 
 
 @dataclass(frozen=True)
@@ -725,7 +725,7 @@ def journal_report(project: Project, object_id: str | None = None, since: int = 
     entries = journal.entries_for(project, object_id, since)
     return JournalReport(
         project.journal is not None,
-        tuple(JournalRecord(**e.model_dump(mode="json")) for e in entries),
+        tuple(JournalRecord(**e.model_dump(mode="json", exclude={"parent"})) for e in entries),
     )
 
 

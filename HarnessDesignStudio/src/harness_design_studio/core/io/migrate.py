@@ -37,10 +37,36 @@ def _v2_number(files: RawFiles) -> RawFiles:
     return files
 
 
+def _v2_journal_lines(files: RawFiles) -> RawFiles:
+    """The journal (M7a, D-228): `journal.json`, one JSON list, becomes `journal.jsonl`, one entry
+    per line, so that Git can keep both sides' entries of a merge. The entries are carried over as
+    they are, each with its number and its chain value, so they still verify; an entry added later
+    names its parent instead (`core.model.journal`). The part goes by the files, not by the number:
+    it does nothing for a project without `journal.json`, and the loader reads a `journal.json`
+    in a format 2 project the same way (a build before M7a wrote that). With both files, the
+    entries of both, in the order of the files (the reader keeps one copy of an entry)."""
+    old = files.pop("journal.json", None)
+    if old is None:
+        return files
+    new = files.get("journal.jsonl")
+    if (
+        isinstance(new, dict)
+        and isinstance(new.get("journal"), list)
+        and isinstance(old, dict)
+        and isinstance(old.get("journal"), list)
+    ):
+        files["journal.jsonl"] = {"journal": [*new["journal"], *old["journal"]]}
+    elif new is None:
+        files["journal.jsonl"] = old
+    else:
+        files["journal.json"] = old  # a damaged file: left as it is, for the loader to report
+    return files
+
+
 # The parts of the step from format 1 to 2, run in this order on a copy of the files. Format 2 is
-# not frozen until 2.0.0 is tagged (D-226): a change that is still to come before then (the journal
-# layout of M7a) is one more part here, not a format 3. After the tag, only sparse fields.
-V1_TO_V2_PARTS: tuple[Callable[[RawFiles], RawFiles], ...] = (_v2_number,)
+# not frozen until 2.0.0 is tagged (D-226): the journal layout of M7a is one more part here, not a
+# format 3 (D-228). After the tag, only sparse fields.
+V1_TO_V2_PARTS: tuple[Callable[[RawFiles], RawFiles], ...] = (_v2_number, _v2_journal_lines)
 
 
 def _v1_to_v2(files: RawFiles) -> RawFiles:
@@ -50,7 +76,8 @@ def _v1_to_v2(files: RawFiles) -> RawFiles:
     format 1 project has to change for that: a loose end is new content, and the origin of a
     harness (`interfaces`, `link` or `drawn`) is worked out from `generated` and the connection that
     names it, never stored (`core.origin`), so no harness file, no hash and no output moves; the
-    step writes the number and nothing else (`V1_TO_V2_PARTS`). The migration safety net
+    step writes the number and moves the journal to its file of one entry per line (M7a, D-228),
+    which is outside every hash and output (`V1_TO_V2_PARTS`). The migration safety net
     (`core.io.upgrade`) proves it changes no hash, finding or output."""
     out = copy.deepcopy(files)
     for part in V1_TO_V2_PARTS:

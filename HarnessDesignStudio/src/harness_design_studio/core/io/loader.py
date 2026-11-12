@@ -48,7 +48,15 @@ from harness_design_studio.core.model.config import ABOUT_KEY
 
 from . import canonical
 from .fs import escapes_root, long_path
-from .layout import MANAGED_DIRS, is_managed, prune_orphan_marks, serialize
+from .layout import (
+    JOURNAL_FILE,
+    MANAGED_DIRS,
+    OLD_JOURNAL_FILE,
+    is_managed,
+    parse_file,
+    prune_orphan_marks,
+    serialize,
+)
 from .migrate import migrate_raw, schema_version_of
 
 
@@ -80,7 +88,7 @@ def read_tree(root: Path) -> tuple[dict[str, Any], dict[str, bytes], list[Issue]
     issues: list[Issue] = []
     base = long_path(root)
     candidates = [Path("project.json")]
-    for top_file in ("waivers.json", "changelog.json", "journal.json"):
+    for top_file in ("waivers.json", "changelog.json", OLD_JOURNAL_FILE, JOURNAL_FILE):
         if (base / top_file).is_file():
             candidates.append(Path(top_file))
     for top in MANAGED_DIRS:
@@ -105,7 +113,7 @@ def read_tree(root: Path) -> tuple[dict[str, Any], dict[str, bytes], list[Issue]
             issues.append(Issue("error", "file_unreadable", f"The file could not be read ({exc.strerror}).", rel))  # fmt: skip
             continue
         try:
-            parsed[rel] = canonical.loads_strict(data)
+            parsed[rel] = parse_file(rel, data)
         except RecursionError:
             broken[rel] = data
             issues.append(Issue("error", "invalid_json", "The file is nested too deeply to read.", rel))  # fmt: skip
@@ -243,26 +251,41 @@ def _layout(b: _Builder, rel: str, data: Any) -> None:
     )
 
 
-def _journal(b: _Builder, rel: str, data: Any) -> None:
-    """The change journal. A journal that does not read back whole (an entry changed, removed or put
-    in, a gap in the numbers) is set aside as it is and reported: it is a record, and a record that
-    cannot be trusted must not be written over."""
-    if (
-        not isinstance(data, dict)
-        or set(data) != {"journal"}
-        or not isinstance(data["journal"], list)
-    ):
-        b.quarantine(rel, "journal", "expected an object with a single 'journal' list", data)
-        b.issues.append(Issue("error", "journal_damaged", "The change journal is damaged: it is not a list of entries.", rel))  # fmt: skip
+def _journal(b: _Builder, sources: dict[str, Any]) -> None:
+    """The change journal, from `journal.jsonl` (one entry per line, M7a) and from `journal.json`
+    (format 1, and a format 2 project that a build of the tool wrote before M7a; D-228), whichever
+    the folder has; with both, their entries together (the same entry once). A journal that does
+    not read back whole (an entry changed, removed or put in) is set aside as it is and reported:
+    it is a record, and a record that cannot be trusted must not be written over."""
+    rel = JOURNAL_FILE if JOURNAL_FILE in sources else OLD_JOURNAL_FILE
+    raws: list[Any] = []
+    for name in (JOURNAL_FILE, OLD_JOURNAL_FILE):
+        if name not in sources:
+            continue
+        data = sources[name]
+        if (
+            not isinstance(data, dict)
+            or set(data) != {"journal"}
+            or not isinstance(data["journal"], list)
+        ):
+            b.quarantine(name, "journal", "expected an object with a single 'journal' list", data)
+            b.issues.append(Issue("error", "journal_damaged", "The change journal is damaged: it is not a list of entries.", name))  # fmt: skip
+            return
+        raws += data["journal"]
+    numbered = [r for r in raws if isinstance(r, dict) and "parent" in r and "seq" in r]
+    if numbered:
+        why = "an entry has both a number and a parent: it was changed after it was written"
+        b.quarantine(rel, "journal", why, {"journal": raws})
+        b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {why}.", rel))  # fmt: skip
         return
     try:
-        entries = [JournalEntry.model_validate(raw) for raw in data["journal"]]
+        entries = [JournalEntry.model_validate(raw) for raw in raws]
         b.p.journal = Journal(entries)
     except ValidationError as exc:
-        b.quarantine(rel, "journal", _describe(exc), data)
+        b.quarantine(rel, "journal", _describe(exc), {"journal": raws})
         b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {_describe(exc)}", rel))  # fmt: skip
     except JournalError as exc:
-        b.quarantine(rel, "journal", str(exc), data)
+        b.quarantine(rel, "journal", str(exc), {"journal": raws})
         b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {exc}.", rel))  # fmt: skip
 
 
@@ -286,6 +309,7 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
         if meta is not None:
             project.meta = meta
     project.config = {}
+    journals: dict[str, Any] = {}
     for rel in sorted(files):
         data = files[rel]
         if rel == "project.json":
@@ -333,8 +357,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
                 project.baselines[base.id] = base
         elif rel == "waivers.json":
             b.items(rel, data, "waivers", "waiver", Waiver, project.waivers)
-        elif rel == "journal.json":
-            _journal(b, rel, data)
+        elif rel in (JOURNAL_FILE, OLD_JOURNAL_FILE):
+            journals[rel] = data
         elif rel == "imports/records.json":
             b.items(rel, data, "imports", "import record", ImportRecord, project.import_records)
         elif rel == "asbuilt/records.json":
@@ -363,6 +387,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
             project.harnesses[h.id] = h
             if rel != f"physical/harnesses/{h.id}.json":
                 issues.append(Issue("warning", "file_name_mismatch", f"Harness '{h.id}' is stored in a file with a different name; it will be renamed on the next save.", rel, h.id))  # fmt: skip
+    if journals:
+        _journal(b, journals)
 
 
 def load_project(root: Path | str, *, migrate: bool = True) -> LoadResult:
@@ -410,6 +436,10 @@ def load_from_files(
         issues.append(Issue("info", "migrated", f"The project was in format {version} and was upgraded in memory to {SCHEMA_VERSION}. Nothing is changed on disk until you save.", "project.json"))  # fmt: skip
     else:
         files_for_build = files
+    if version == SCHEMA_VERSION and OLD_JOURNAL_FILE in files_for_build:
+        # format 2 written by a build of the tool before M7a (D-228): read as it is, written as
+        # journal.jsonl by the next save, which keeps the old file as journal.json.bak
+        issues.append(Issue("info", "journal_old_layout", "The change journal is in the file journal.json of a build before format 2 was complete. The next save writes it as journal.jsonl (one entry per line) and keeps the old file as journal.json.bak.", OLD_JOURNAL_FILE))  # fmt: skip
     _build(files_for_build, project, issues)
     prune_orphan_marks(project)  # (the marks of a deleted connection or interface: silently)
     # a file that was skipped unread is damage, not absence: saving must not replace it
@@ -432,7 +462,9 @@ def disk_fingerprint(root: Path | str) -> str:
     digest = hashlib.sha256()
     base = long_path(Path(root))
     for path in sorted(
-        p for p in base.rglob("*.json") if is_managed(p.relative_to(base).as_posix())
+        p
+        for p in [*base.rglob("*.json"), base / JOURNAL_FILE]
+        if is_managed(p.relative_to(base).as_posix()) and p.is_file()
     ):
         if path.is_symlink() or escapes_root(base, path):
             continue  # not read by the loader either

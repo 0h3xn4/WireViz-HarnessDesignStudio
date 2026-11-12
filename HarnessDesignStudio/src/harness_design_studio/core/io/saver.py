@@ -15,7 +15,14 @@ from harness_design_studio.core.model import SCHEMA_VERSION, Project, evolve
 
 from . import canonical
 from .fs import atomic_write_bytes, escapes_root, long_path, sweep_stale_temp_files
-from .layout import MANAGED_DIRS, is_managed, journal_payload, serialize
+from .layout import (
+    JOURNAL_FILE,
+    MANAGED_DIRS,
+    OLD_JOURNAL_FILE,
+    is_managed,
+    journal_bytes,
+    serialize,
+)
 from .loader import LoadResult, disk_fingerprint, load_project
 
 GITIGNORE = (
@@ -94,6 +101,7 @@ def save_project(
         )
 
     result = SaveResult()
+    journal_existed = (base / JOURNAL_FILE).is_file()
     sweep_stale_temp_files(base, MANAGED_DIRS)  # leftovers of a save that was killed
     files = serialize(project, tool_version=__version__)
     new_journal = None
@@ -108,7 +116,7 @@ def save_project(
         rows += journal_module.extension_rows(project, base)  # design inputs outside the model
         if rows:
             new_journal = journal_module.extended(project.journal, rows)
-            files["journal.json"] = canonical.dumps(journal_payload(new_journal))
+            files[JOURNAL_FILE] = journal_bytes(new_journal)
     # from here on the release record may be on disk: History.undo must not take it away again
     project.saved_records |= frozenset(f"baselines:{k}" for k in project.baselines) | frozenset(
         f"changelog:{k}" for k in project.changelog
@@ -123,7 +131,7 @@ def save_project(
     # the files, never less
     for rel, data in sorted(
         files.items(),
-        key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0] != "journal.json", kv[0]),
+        key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0] != JOURNAL_FILE, kv[0]),
     ):
         path = base / rel
         if on_disk is not None:
@@ -152,6 +160,13 @@ def save_project(
     gitignore = base / ".gitignore"
     if not gitignore.exists():
         atomic_write_bytes(gitignore, GITIGNORE, backup=False, root=base)
+    if JOURNAL_FILE in result.written and not journal_existed and not upgrade:
+        # the journal's file is new here (a journal started, or moved out of journal.json): Git
+        # is told to keep both sides' lines of a merge (an upgrade does this once it has passed
+        # its check, `core.io.upgrade`)
+        from harness_design_studio.core.mergefix import add_journal_union
+
+        add_journal_union(base)
     project.meta = evolve(project.meta, tool_version=__version__, schema_version=SCHEMA_VERSION)
     project.migrated_from = None
     return result
@@ -204,7 +219,8 @@ def _migration_backup(base: Path, version: int) -> Path:
 
 def _managed_on_disk(base: Path) -> list[str]:
     found = []
-    for top_file in ("project.json", "waivers.json", "changelog.json", "journal.json"):
+    tops = ("project.json", "waivers.json", "changelog.json", OLD_JOURNAL_FILE, JOURNAL_FILE)
+    for top_file in tops:
         if (base / top_file).is_file():
             found.append(top_file)
     for top in MANAGED_DIRS:

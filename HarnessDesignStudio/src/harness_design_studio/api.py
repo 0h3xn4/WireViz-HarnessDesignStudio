@@ -311,7 +311,7 @@ def create_project(
     """Make a new project folder from an example (see `list_templates`) and return the project.
     The folder must not exist or must be empty (`TemplateError` otherwise); `name` replaces the
     project name of the example. Like the command `new`, it starts a change journal
-    (`journal.json`) unless `journal` is false. With `annotate_config` (like `new
+    (`journal.jsonl`) unless `journal` is false. With `annotate_config` (like `new
     --annotate-config`) every config file starts with its comments, `_about` (see
     `annotate_config`)."""
     return _create_project(
@@ -604,7 +604,7 @@ def get_journal(
 
 
 def start_journal(folder: PathLike, *, author: str | None = None) -> bool:
-    """Give a project a change journal (writes `journal.json`). False when it has one already.
+    """Give a project a change journal (writes `journal.jsonl`). False when it has one already.
     Takes the project lock."""
     path = Path(folder)
     with _locked(path), _as(author):

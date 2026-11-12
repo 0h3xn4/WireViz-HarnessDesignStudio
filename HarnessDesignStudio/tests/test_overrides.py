@@ -303,7 +303,7 @@ def test_a_project_with_locked_wires_and_no_reasons_opens_and_saves_byte_for_byt
     save_project(p, folder)
     before = folder_bytes(folder)
     assert all(b"overrides" not in v for k, v in before.items() if "harnesses" in k)
-    assert "journal.json" not in before
+    assert "journal.jsonl" not in before
     loaded = load_project(folder).project
     assert all(not w.overrides for h in loaded.harnesses.values() for w in h.wires)
     assert any(w.locked for h in loaded.harnesses.values() for w in h.wires)
@@ -326,7 +326,7 @@ def test_the_files_of_a_project_hold_no_name_and_no_time_for_an_override(tmp_pat
     w = next(iter(p.harnesses.values())).wires[0]
     History(p).execute("x", plan_override(p, w.id, "gauge_awg", 20, "ECR-7"))
     save_project(p, folder)
-    design = [v for k, v in folder_bytes(folder).items() if k != "journal.json"]
+    design = [v for k, v in folder_bytes(folder).items() if k != "journal.jsonl"]
     blob = b"\n".join(design).decode("utf-8")
     assert "ECR-7" in blob
     for e in p.journal:
