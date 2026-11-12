@@ -19,7 +19,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Device kind](#device-kind-after-1150-schema-version-stays-1)
 - [Build data additions](#build-data-additions-170-schema-version-stays-1)
 - [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
-- [Loose cable ends and the origin of a harness](#loose-cable-ends-and-the-origin-of-a-harness-m4a-format-2-will-carry-it)
+- [Loose cable ends and the origin of a harness](#loose-cable-ends-and-the-origin-of-a-harness-m4a-format-2)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Import record](#import-record-optional-schema-version-stays-1)
 - [Diagram marks](#diagram-marks-optional-schema-version-stays-1)
