@@ -4,15 +4,33 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 2.0.0 (2026-11-12; not a statement of compliance)
+
+Version 2.0.0 is the **full release** of what the release candidate 2.0.0rc1 tested, and the **latest full release**. 2.0.0rc1 was published on 2026-11-12 as a pre-release; an end-to-end test of its packages found two small faults and two gaps in the upgrade guide, and they are fixed here (the first section below). There is no 2.0.0rc2: the fixes are small, covered by tests, and change no file format and no written file. It is the first full release that writes **format 2**, a new version of the project file format (decisions D-226 and D-228), and **format 2 is frozen with this release**: it does not change any more. **How to upgrade from 1.17.1 or older:** open each project once in the editor and answer **Upgrade**, or run `harness-design-studio migrate DIR --dry-run` to look first and then `harness-design-studio migrate DIR`. The upgrade keeps the original files in `.migration-backup-v1/`, checks itself and changes no design data. Export the outputs once afterwards. After the upgrade, versions 1.x open the project read-only, so everyone who edits a shared project needs this version. The guide is [Upgrade a project to format 2](docs/user-manual/upgrade-a-project.md). Everything that changed since 1.17.1 is listed below in short; the full text is in the section 2.0.0rc1 of the changelog, which stays as history. **Not done:** step M7b of the plan (two branches that make the same ID); whether the *Merge* button of the GitHub web site honours `merge=union`; the signature and the attestation checked from outside the release workflow (the owner decided to skip such checks); the Windows packages on a real computer; a look at the screens on a real display; and the owner's sign-off. `2.0.0` is shorter than `2.0.0rc1`, so the stored hashes of the written files, the numbers snapshot and the migration hashes were written again: no number and no written file changes apart from the version stamp and the model hash that includes it (`docs/changes.md`, decision D-230).
+
 ### Fixed
 
-The findings of the end-to-end test of the published 2.0.0rc1:
+The findings of the end-to-end test of the published 2.0.0rc1 (pull request 226):
 
 - **The editor names the right reason for a read-only project.** A project of format 1 opened with **Open read-only** showed the banner *Read-only: this project was saved by a newer version of the tool, or is open in another window*, and the note of the user manual was not shown. The banner now says *This project is in format 1, so it is open read-only. Upgrade it to edit it.*, and its button **Upgrade…** asks the upgrade question again. For the other causes the banner names the one that applies: a newer version saved the project, it is open in another window, or it cannot be locked for editing here.
 - **`check` no longer warns `not_canonical` on `project.json` of an untouched format 1 project.** It compared the file with what a save would write now, which is format 2. A project read from an older format is now compared with the tool's formatting of its own format, as 1.17.1 did. A hand edit of the file is still found.
 - **`validate` and `check` say how to upgrade a format 1 project.** The line `migrated` said *Nothing is changed on disk until you save*, but a save into the project's folder is refused. It now says that nothing was changed on disk and names `harness-design-studio migrate DIR` and the editor's **Upgrade**.
 - **`migrate` and the editor's upgrade say when to export again.** When the outputs in `outputs/` were written by another version, they say to export them once with this version, because `verify --outputs` compares them with the version that runs. `migrate --json` gives that version as `outputs_version`.
 - **The user manual [Upgrade a project to format 2](docs/user-manual/upgrade-a-project.md)** now says to export once after the upgrade and why, what 1.17.1's `journal` command says of a format 2 project (it does not see `journal.jsonl`, and `--start` is refused), and that the `error:` line of a refused command can come first in a log.
+
+### Changed
+
+- **Records for 2.0.0.** The version is 2.0.0 (decision D-230). The example projects, the test fixtures, the golden outputs, the stored hashes (`BASE_VERSION` 2.0.0) and the numbers snapshot were made again with the repository's tools; they differ from those of `master` only by the version stamp and the hashes that include it. The inventories and SBOMs of 2.0.0 are made by `tools/third_party.py` from the published packages of 2.0.0rc1, after their SHA-256 sums were checked against the `SHA256SUMS` of that release (`compliance/evidence/release_2.0.0rc1_SHA256SUMS`, the publication record of pull request 225); no dependency changed since 2.0.0rc1, and they differ from the 2.0.0rc1 files only by the version. `THIRD_PARTY_NOTICES.txt` follows. The pages that print the version as example output say 2.0.0. The status pages, the plan towards 2.0 (M4 and M7a done in 2.0.0), the owner's checklist (F1), the final report of the legal work and the publication record of 2.0.0rc1 say that 2.0.0 is prepared. No code and no written output changes, apart from the version stamp.
+
+### Everything since 1.17.1, in short
+
+The full text of each change is in the section 2.0.0rc1 below.
+
+- **Projects are saved in format 2** (D-226; M4 of the programme towards 2.0.0). Format 2 is format 1 with the number 2 in `project.json`, and the format that may hold a loose cable end. A format 1 project is upgraded once, by `migrate` or the editor's question, with a backup in `.migration-backup-v1/`, a record and a check; a command that saves refuses a format 1 project. The model hash and every written file stay the same. Versions 1.x open a format 2 project read-only.
+- **The change journal merges** (D-228; M7a). The journal is `journal.jsonl`, one entry per line, each entry chained to the entry before it on its own branch; `.gitattributes` says `journal.jsonl merge=union`, so the entries of two Git branches merge without a conflict, and `merge-fix` records the merge.
+- **A workflow makes the release tag** (D-227). It checks the commit, the version and the tests, makes the annotated tag and starts the release workflow on it. 2.0.0rc1 was tagged this way.
+- **Text in the editor is no longer cut off** (pull request 218): the project name in the top bar, the cards of the Problems tab in a narrow panel, a message over the diagram and the hint of the Connect tool.
+- **The install step of the Windows setup program on the release page reads as a sentence** (pull request 219).
 
 ## 2.0.0rc1 (2026-11-12; release candidate; not a statement of compliance)
 

@@ -1,5 +1,5 @@
-# harness-design-studio 2.0.0rc1 model a129963fff1b
-# harness-design-studio 2.0.0rc1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 2.0.0 model f85e86d6fd72
+# harness-design-studio 2.0.0. Provided as is, without warranty. Verify before use.
 Label,Kind,Text,Quantity
 W010-P1,connector,W010-P1 mates GPSU1-J02,1
 W010-P2,connector,W010-P2 mates RIU1-J11,1

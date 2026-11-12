@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Offline spacecraft harness design tool."""
 
-__version__ = "2.0.0rc1"
+__version__ = "2.0.0"

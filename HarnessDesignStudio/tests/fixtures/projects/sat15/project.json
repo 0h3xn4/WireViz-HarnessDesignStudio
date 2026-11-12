@@ -2,5 +2,5 @@
   "description": "About 15 units with nominal and redundant chains.",
   "name": "sat15 (example data)",
   "schema_version": 2,
-  "tool_version": "2.0.0rc1"
+  "tool_version": "2.0.0"
 }

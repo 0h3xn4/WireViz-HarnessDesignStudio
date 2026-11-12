@@ -1,5 +1,5 @@
-# harness-design-studio 2.0.0rc1 model a129963fff1b
-# harness-design-studio 2.0.0rc1. Provided as is, without warranty. Verify before use.
+# harness-design-studio 2.0.0 model f85e86d6fd72
+# harness-design-studio 2.0.0. Provided as is, without warranty. Verify before use.
 Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
 (no part),unknown,,,,missing from parts list,1.4,m,8,W009;W010;W011;W012
 (open end),connector,,,Connector not chosen yet (loose end),to fill in,5,ea,,W009;W011;W012;W013
