@@ -1,0 +1,84 @@
+# Makes the annotated release tag vX.Y.Z on a commit of master and starts the release workflow
+# for it (decision D-227). Started by hand: Actions > harness-design-studio tag > Run workflow,
+# with the version and the full SHA of the merge commit of the release preparation.
+#
+# A tag that a workflow pushes with its own token starts no other workflow (a rule of GitHub), so
+# the last step starts release.yml through workflow_dispatch *on the tag*, which GitHub allows.
+# Because it runs on the tag, the signatures name `release.yml@refs/tags/vX.Y.Z`, the same
+# identity as for a tag pushed by a person, and the cosign command in docs/INSTALL.md fits.
+name: harness-design-studio tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without the v, for example 2.0.0rc1 or 2.0.0"
+        required: true
+        type: string
+      commit:
+        description: "Full SHA (40 characters) of the commit on master to tag"
+        required: true
+        type: string
+
+permissions:
+  contents: read  # only the job below may write
+
+concurrency:
+  group: harness-tag-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write  # push the tag; nothing else is written
+      actions: write  # start release.yml on the tag
+      checks: read  # read the CI results of the commit
+    env:
+      VERSION: ${{ inputs.version }}
+      COMMIT: ${{ inputs.commit }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: The inputs have the right form
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(rc[0-9]+)?$ ]] || { echo "::error::not a version: $VERSION"; exit 1; }
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::not a full commit SHA: $COMMIT"; exit 1; }
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          ref: master
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.14"
+      - name: The commit is on master and the tag is new
+        run: |
+          git merge-base --is-ancestor "$COMMIT" origin/master || { echo "::error::$COMMIT is not on master"; exit 1; }
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::the tag v$VERSION exists already"; exit 1
+          fi
+      - name: The version and the changelog of the commit fit the tag
+        run: |
+          git checkout --quiet --detach "$COMMIT"
+          cd HarnessDesignStudio && python -S -m tools.release_notes check "v$VERSION"
+      - name: The tests passed on the commit (Linux and Windows)
+        run: |
+          gh api --paginate "repos/$GH_REPO/commits/$COMMIT/check-runs?per_page=100" \
+            --jq '.check_runs[] | select(.name != "tag") | [.name, .status, (.conclusion // "")] | @tsv' \
+            > "$RUNNER_TEMP/checks.tsv"  # "tag" is this job: it runs on the commit when the commit is the tip of master
+          cat "$RUNNER_TEMP/checks.tsv"
+          for job in "test (ubuntu-24.04)" "test (windows-latest)"; do
+            grep -qP "^\Q$job\E\tcompleted\tsuccess$" "$RUNNER_TEMP/checks.tsv" || { echo "::error::$job has not passed on $COMMIT"; exit 1; }
+          done
+          if grep -vP "\tcompleted\t(success|skipped|neutral)$" "$RUNNER_TEMP/checks.tsv"; then
+            echo "::error::a check above is not finished or did not pass"; exit 1
+          fi
+      - name: Make and push the annotated tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" "$COMMIT" -m "Harness Design Studio $VERSION" -m "Made by the workflow harness-tag.yml, run $GITHUB_RUN_ID, started by $GITHUB_ACTOR (decision D-227). The open decisions are in compliance/SIGNOFF.md."
+          git push origin "refs/tags/v$VERSION"
+      - name: Start the release workflow on the tag
+        run: gh workflow run release.yml --ref "v$VERSION" -f tag="v$VERSION"
