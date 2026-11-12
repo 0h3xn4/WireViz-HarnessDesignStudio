@@ -122,7 +122,8 @@ def test_format_2_is_format_1_with_another_number(tmp_path: Path) -> None:
     assert set(old) == set(new)
     assert {k for k in old if old[k] != new[k]} == {"project.json"}
     a, b = json.loads(old["project.json"]), json.loads(new["project.json"])
-    assert (a.pop("schema_version"), b.pop("schema_version")) == (1, 2) and a == b
+    numbers = (a.pop("schema_version"), b.pop("schema_version"))
+    assert numbers == (1, 2) and a == b
     assert model_hash(load_project(out).project) == V1_HASH
 
 
